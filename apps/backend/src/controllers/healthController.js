@@ -1,5 +1,7 @@
+import { getHealthStatus } from "../services/healthService.js";
+
 export function getHealth(req, res) {
-  res.json({
-    status: "ok",
-  });
+  const healthStatus = getHealthStatus();
+
+  res.json(healthStatus);
 }
