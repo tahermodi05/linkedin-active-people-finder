@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js"
@@ -10,14 +11,10 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module",
   "dependencies": {
     "dotenv": "^17.4.2",
-<<<<<<< HEAD
-    "express": "^5.2.1"
-=======
     "express": "^5.2.1",
-    "nodemon": "^3.1.14"
->>>>>>> 17439a0 (feat(backend): add route-controller-service foundation)
+    "nodemon": "^3.1.14",
+    "zod": "^4.4.3"
   }
 }

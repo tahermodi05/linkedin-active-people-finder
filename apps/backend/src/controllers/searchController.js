@@ -1,7 +1,17 @@
 import { searchPeople } from "../services/searchService.js";
+import { successResponse } from "../utils/response.js";
 
-export async function search(req, res) {
-  const result = await searchPeople(req.body);
+export async function search(req, res, next) {
+  try {
+    const result = await searchPeople(req.validatedData);
 
-  res.json(result);
+ return successResponse(
+  res,
+  result,
+  "Search completed"
+);
+
+  } catch (error) {
+    next(error);
+  }
 }
