@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
   },
   "keywords": [],
   "author": "",
@@ -12,6 +13,11 @@
   "type": "module",
   "dependencies": {
     "dotenv": "^17.4.2",
+<<<<<<< HEAD
     "express": "^5.2.1"
+=======
+    "express": "^5.2.1",
+    "nodemon": "^3.1.14"
+>>>>>>> 17439a0 (feat(backend): add route-controller-service foundation)
   }
 }

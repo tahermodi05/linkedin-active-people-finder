@@ -4,18 +4,22 @@ import express from "express";
 import { logger } from "./middleware/logger.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import healthRouter from "./routes/health.js";
+import searchRouter from "./routes/searchRoutes.js";
 
 const app = express();
 const PORT = config.port;
 
+// Middleware
 app.use(express.json());
 app.use(logger);
 
+// Routes
 app.get("/", (req, res) => {
   res.send("Backend is working! 🚀");
 });
 
 app.use("/health", healthRouter);
+app.use("/api/search", searchRouter);
 
 // Error handler MUST be last
 app.use(errorHandler);
