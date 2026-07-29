@@ -1,7 +1,12 @@
+import { errorResponse } from "../utils/response.js";
+
 export function errorHandler(err, req, res, next) {
   console.error(err);
 
-  res.status(500).json({
-    error: "Internal Server Error",
-  });
+  return errorResponse(
+    res,
+    "Internal Server Error",
+    [],
+    500
+  );
 }
