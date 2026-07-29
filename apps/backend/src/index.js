@@ -24,6 +24,13 @@ app.use("/api/search", searchRouter);
 // Error handler MUST be last
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`);
 });
+
+console.log(server.listening);
+console.log(process.pid);
+
+setInterval(() => {
+  console.log('alive');
+}, 5000);
