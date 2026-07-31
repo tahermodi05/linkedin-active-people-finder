@@ -16,7 +16,6 @@ async function handleStartScan(sendResponse) {
       throw new Error("No active tab found");
     }
 
-    // Detect page
     const pageResponse = await chrome.tabs.sendMessage(activeTab.id, {
       type: "DETECT_PAGE",
     });
@@ -25,26 +24,27 @@ async function handleStartScan(sendResponse) {
       throw new Error("Failed to detect page");
     }
 
-    if (pageResponse.pageType !== "search") {
+    const supportedPages = ["search", "company-people"];
+
+    if (!supportedPages.includes(pageResponse.pageType)) {
       sendResponse({
         success: false,
-        message: `Current page is ${pageResponse.pageType}`,
+        message:
+          "Please open a LinkedIn Company → People page before scanning.",
       });
       return;
     }
 
-    // Scan profiles
     const scanResponse = await chrome.tabs.sendMessage(activeTab.id, {
       type: "SCAN_SEARCH_RESULTS",
     });
 
     if (!scanResponse?.success) {
-      throw new Error("Failed to scan search results");
+      throw new Error("Failed to scan profiles");
     }
 
     const profiles = scanResponse.profiles ?? [];
 
-    // Send to backend
     const backendResponse = await fetch("http://localhost:3000/api/search", {
       method: "POST",
       headers: {
@@ -66,7 +66,7 @@ async function handleStartScan(sendResponse) {
       message: `Sent ${profiles.length} profiles`,
     });
   } catch (error) {
-    console.error("START_SCAN failed:", error);
+    console.error(error);
 
     sendResponse({
       success: false,
