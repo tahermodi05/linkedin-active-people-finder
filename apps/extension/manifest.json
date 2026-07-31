@@ -2,16 +2,31 @@
   "manifest_version": 3,
   "name": "LinkedIn Active People Finder",
   "version": "1.0.0",
+
+  "permissions": [
+    "tabs"
+  ],
+
+  "host_permissions": [
+    "https://www.linkedin.com/*"
+  ],
+
   "action": {
     "default_popup": "popup.html"
   },
+
   "background": {
     "service_worker": "background.js"
   },
+
   "content_scripts": [
     {
-      "matches": ["https://www.linkedin.com/*"],
-      "js": ["content.js"]
+      "matches": [
+        "https://www.linkedin.com/*"
+      ],
+      "js": [
+        "content.js"
+      ]
     }
   ]
 }

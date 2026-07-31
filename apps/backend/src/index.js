@@ -1,13 +1,25 @@
 import "dotenv/config";
-import config from "./config/index.js";
 import express from "express";
+import cors from "cors";
+
+import config from "./config/index.js";
 import { logger } from "./middleware/logger.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+
 import healthRouter from "./routes/health.js";
 import searchRouter from "./routes/searchRoutes.js";
 
 const app = express();
 const PORT = config.port;
+
+// CORS
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
 
 // Middleware
 app.use(express.json());
@@ -32,5 +44,5 @@ console.log(server.listening);
 console.log(process.pid);
 
 setInterval(() => {
-  console.log('alive');
+  console.log("alive");
 }, 5000);

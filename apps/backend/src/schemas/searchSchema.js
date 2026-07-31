@@ -1,9 +1,13 @@
 import { z } from "zod";
 
+const profileSchema = z.object({
+  name: z.string().trim().min(1, "Name is required"),
+
+  profileUrl: z.string().url("Profile URL must be a valid URL"),
+});
+
 export const searchSchema = z.object({
-  keyword: z
-    .string()
-    .trim()
-    .min(2, "Keyword must be at least 2 characters long")
-    .max(100, "Keyword cannot exceed 100 characters"),
+  profiles: z
+    .array(profileSchema)
+    .min(1, "At least one profile is required"),
 });
