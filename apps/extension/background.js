@@ -103,21 +103,30 @@ async function handleCaptureActivitySnapshot(sendResponse) {
       throw new Error("No active tab found");
     }
 
-    const pageResponse = await chrome.tabs.sendMessage(activeTab.id, {
-      type: MESSAGE_TYPES.DETECT_PAGE,
-    });
+    const pageUrl = activeTab.url || "";
 
-    if (!pageResponse?.success) {
-      throw new Error("Failed to detect page");
-    }
-
-    if (pageResponse.pageType !== "activity") {
+    if (!/^https:\/\/www\.linkedin\.com\//.test(pageUrl)) {
       sendResponse({
         success: false,
         message: "Please open a LinkedIn Activity page before capturing.",
       });
       return;
     }
+
+    const url = new URL(pageUrl);
+
+    if (!/recent-activity|activity/i.test(url.pathname)) {
+      sendResponse({
+        success: false,
+        message: "Please open a LinkedIn Activity page before capturing.",
+      });
+      return;
+    }
+
+    await chrome.scripting.executeScript({
+      target: { tabId: activeTab.id },
+      files: ["activitySnapshotCapture.js"],
+    });
 
     const captureResponse = await chrome.tabs.sendMessage(activeTab.id, {
       type: MESSAGE_TYPES.CAPTURE_ACTIVITY_SNAPSHOT,
