@@ -70,22 +70,41 @@ test("extractRecentPosts follows the committed snapshot contract", () => {
   assert.ok(Array.isArray(result.posts));
 
   for (const post of result.posts) {
-    assert.deepEqual(Object.keys(post), ["activityUrn"]);
+    assert.deepEqual(Object.keys(post), ["activityUrn", "content"]);
     assert.ok(
       post.activityUrn === null ||
         (typeof post.activityUrn === "string" &&
           post.activityUrn.startsWith("urn:li:activity:"))
+    );
+    assert.deepEqual(Object.keys(post.content), ["text"]);
+    assert.ok(
+      post.content.text === null || typeof post.content.text === "string"
     );
   }
 
   assert.deepEqual(result, {
     postCount: 5,
     posts: [
-      { activityUrn: "urn:li:activity:7487759344000794624" },
-      { activityUrn: "urn:li:activity:7485347500183441408" },
-      { activityUrn: "urn:li:activity:7485347481082404864" },
-      { activityUrn: "urn:li:activity:7483058417943883776" },
-      { activityUrn: "urn:li:activity:7482688747671588864" },
+      {
+        activityUrn: "urn:li:activity:7487759344000794624",
+        content: { text: null },
+      },
+      {
+        activityUrn: "urn:li:activity:7485347500183441408",
+        content: { text: null },
+      },
+      {
+        activityUrn: "urn:li:activity:7485347481082404864",
+        content: { text: null },
+      },
+      {
+        activityUrn: "urn:li:activity:7483058417943883776",
+        content: { text: null },
+      },
+      {
+        activityUrn: "urn:li:activity:7482688747671588864",
+        content: { text: null },
+      },
     ],
   });
 });

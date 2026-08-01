@@ -72,7 +72,12 @@ test("buildActivityIntelligence orchestrates extractor then signals", () => {
   assert.deepEqual(result, {
     recentPosts: {
       postCount: 1,
-      posts: [{ activityUrn: "urn:li:activity:1" }],
+      posts: [
+        {
+          activityUrn: "urn:li:activity:1",
+          content: { text: null },
+        },
+      ],
     },
     signals: {
       totalPosts: 1,
@@ -99,11 +104,26 @@ test("buildActivityIntelligence returns the committed object shape", () => {
     recentPosts: {
       postCount: 5,
       posts: [
-        { activityUrn: "urn:li:activity:7487759344000794624" },
-        { activityUrn: "urn:li:activity:7485347500183441408" },
-        { activityUrn: "urn:li:activity:7485347481082404864" },
-        { activityUrn: "urn:li:activity:7483058417943883776" },
-        { activityUrn: "urn:li:activity:7482688747671588864" },
+        {
+          activityUrn: "urn:li:activity:7487759344000794624",
+          content: { text: null },
+        },
+        {
+          activityUrn: "urn:li:activity:7485347500183441408",
+          content: { text: null },
+        },
+        {
+          activityUrn: "urn:li:activity:7485347481082404864",
+          content: { text: null },
+        },
+        {
+          activityUrn: "urn:li:activity:7483058417943883776",
+          content: { text: null },
+        },
+        {
+          activityUrn: "urn:li:activity:7482688747671588864",
+          content: { text: null },
+        },
       ],
     },
     signals: {
