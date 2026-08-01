@@ -1,7 +1,4 @@
-import {
-  apiRequest,
-  getNextProfileForVerification,
-} from "./services/backendApi.js";
+import { apiRequest } from "./services/backendApi.js";
 
 import {
   startVerificationWorker,
@@ -16,19 +13,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 });
-
-async function openProfileForVerification(profile) {
-  if (!profile?.profileUrl) {
-    throw new Error("Profile URL is missing.");
-  }
-
-  const tab = await chrome.tabs.create({
-    url: profile.profileUrl,
-    active: false,
-  });
-
-  return tab;
-}
 
 async function handleStartScan(sendResponse) {
   try {
