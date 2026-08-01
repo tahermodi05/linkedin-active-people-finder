@@ -70,12 +70,13 @@ test("extractRecentPosts follows the committed snapshot contract", () => {
   assert.ok(Array.isArray(result.posts));
 
   for (const post of result.posts) {
-    assert.deepEqual(Object.keys(post), ["activityUrn", "content"]);
+    assert.deepEqual(Object.keys(post), ["activityUrn", "type", "content"]);
     assert.ok(
       post.activityUrn === null ||
         (typeof post.activityUrn === "string" &&
           post.activityUrn.startsWith("urn:li:activity:"))
     );
+    assert.equal(post.type, "unknown");
     assert.deepEqual(Object.keys(post.content), ["text"]);
     assert.ok(
       post.content.text === null || typeof post.content.text === "string"
@@ -87,22 +88,27 @@ test("extractRecentPosts follows the committed snapshot contract", () => {
     posts: [
       {
         activityUrn: "urn:li:activity:7487759344000794624",
+        type: "unknown",
         content: { text: null },
       },
       {
         activityUrn: "urn:li:activity:7485347500183441408",
+        type: "unknown",
         content: { text: null },
       },
       {
         activityUrn: "urn:li:activity:7485347481082404864",
+        type: "unknown",
         content: { text: null },
       },
       {
         activityUrn: "urn:li:activity:7483058417943883776",
+        type: "unknown",
         content: { text: null },
       },
       {
         activityUrn: "urn:li:activity:7482688747671588864",
+        type: "unknown",
         content: { text: null },
       },
     ],

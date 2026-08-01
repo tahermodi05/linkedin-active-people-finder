@@ -36,9 +36,10 @@ test("extractActivityPost returns the committed object shape", () => {
     createActivityPostRoot("urn:li:activity:7487759344000794624")
   );
 
-  assert.deepEqual(Object.keys(result), ["activityUrn", "content"]);
+  assert.deepEqual(Object.keys(result), ["activityUrn", "type", "content"]);
   assert.deepEqual(result, {
     activityUrn: "urn:li:activity:7487759344000794624",
+    type: "unknown",
     content: {
       text: "I spent the last two weeks breaking down",
     },
@@ -50,6 +51,7 @@ test("extractActivityPost returns null when observable evidence is absent", () =
 
   assert.deepEqual(result, {
     activityUrn: null,
+    type: "unknown",
     content: {
       text: null,
     },
@@ -76,4 +78,15 @@ test("extractActivityPost delegates to the content extractor", () => {
   assert.deepEqual(result.content, {
     text: "one two",
   });
+});
+
+test("extractActivityPost delegates to the post type extractor", () => {
+  const input = createActivityPostRoot(
+    "urn:li:activity:7487759344000794624",
+    "  one\n\n two  "
+  );
+
+  const result = extractActivityPost(input);
+
+  assert.equal(result.type, "unknown");
 });

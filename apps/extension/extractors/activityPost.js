@@ -1,4 +1,5 @@
 import { extractActivityContent } from "./activityContent.js";
+import { extractActivityPostType } from "./activityPostType.js";
 
 function getActivityUrn(item) {
   try {
@@ -15,6 +16,7 @@ function getActivityUrn(item) {
 export function extractActivityPost(item) {
   return {
     activityUrn: getActivityUrn(item),
+    ...extractActivityPostType(item),
     content: extractActivityContent(item),
   };
 }

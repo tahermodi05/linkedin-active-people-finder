@@ -75,6 +75,7 @@ test("buildActivityIntelligence orchestrates extractor then signals", () => {
       posts: [
         {
           activityUrn: "urn:li:activity:1",
+          type: "unknown",
           content: { text: null },
         },
       ],
@@ -106,22 +107,27 @@ test("buildActivityIntelligence returns the committed object shape", () => {
       posts: [
         {
           activityUrn: "urn:li:activity:7487759344000794624",
+          type: "unknown",
           content: { text: null },
         },
         {
           activityUrn: "urn:li:activity:7485347500183441408",
+          type: "unknown",
           content: { text: null },
         },
         {
           activityUrn: "urn:li:activity:7485347481082404864",
+          type: "unknown",
           content: { text: null },
         },
         {
           activityUrn: "urn:li:activity:7483058417943883776",
+          type: "unknown",
           content: { text: null },
         },
         {
           activityUrn: "urn:li:activity:7482688747671588864",
+          type: "unknown",
           content: { text: null },
         },
       ],
