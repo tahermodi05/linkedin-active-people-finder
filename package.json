@@ -16,9 +16,8 @@
   "type": "module",
   "private": true,
   "workspaces": [
-  "apps/*",
-  "packages/*"
-],
+    "apps/*"
+  ],
   "bugs": {
     "url": "https://github.com/tahermodi05/linkedin-active-people-finder/issues"
   },

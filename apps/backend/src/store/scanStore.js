@@ -42,8 +42,3 @@ export function markCurrentProfileProcessed() {
     pendingProfileIndex++;
   }
 }
-
-export function clearLatestScan() {
-  latestScan = [];
-  pendingProfileIndex = 0;
-}

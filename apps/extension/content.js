@@ -7,7 +7,6 @@ const SELECTORS = {
   mutualConnections:
     ".org-people-profile-card__profile-info > .text-align-center > .lt-line-clamp",
   loadMoreButton: ".scaffold-finite-scroll__load-button",
-  finiteScrollContainer: ".scaffold-finite-scroll",
 };
 
 function getText(element) {
@@ -46,11 +45,6 @@ function getProfileLink(card) {
     const href = link.getAttribute("href") || "";
 
     if (!href.includes("/in/")) continue;
-
-    const aria = (link.getAttribute("aria-label") || "").trim();
-    const text = getText(link);
-
-    // Ignore accessibility links like "View John's profile"
 
     const url = normalizeProfileUrl(link.href);
 
@@ -177,20 +171,6 @@ function getLoadMoreButton() {
   return button;
 }
 
-function clickLoadMoreButton() {
-  const button = getLoadMoreButton();
-
-  if (!button) {
-    return false;
-  }
-
-  console.log("Clicking Show More Results...");
-
-  button.click();
-
-  return true;
-}
-
 function extractProfileFromCard(card) {
   const profileUrl = getProfileLink(card);
   const name = getText(card.querySelector(SELECTORS.name));
@@ -260,40 +240,6 @@ function detectPage() {
   }
 
   return "unknown";
-}
-
-async function autoScrollUntilLoaded() {
-  let previousCount = 0;
-  let stableRounds = 0;
-
-  while (stableRounds < 3) {
-    const cards = document.querySelectorAll(SELECTORS.employeeCard);
-    const currentCount = cards.length;
-
-    window.scrollTo({
-      top: document.body.scrollHeight,
-      behavior: "smooth",
-    });
-
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    const newCount = document.querySelectorAll(SELECTORS.employeeCard).length;
-
-    if (newCount === currentCount) {
-      stableRounds++;
-    } else {
-      stableRounds = 0;
-    }
-
-    previousCount = newCount;
-  }
-
-  window.scrollTo({
-    top: 0,
-    behavior: "instant",
-  });
-
-  return previousCount;
 }
 
 async function handleScanRequest() {

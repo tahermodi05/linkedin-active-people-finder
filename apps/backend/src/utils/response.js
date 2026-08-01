@@ -23,11 +23,3 @@ export function errorResponse(
     errors,
   });
 }
-
-export function createdResponse(
-  res,
-  data = null,
-  message = "Created successfully"
-) {
-  return successResponse(res, data, message, 201);
-}
