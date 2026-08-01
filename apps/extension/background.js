@@ -1,9 +1,27 @@
+import {
+  apiRequest,
+  getNextProfileForVerification,
+} from "./services/backendApi.js";
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "START_SCAN") {
     handleStartScan(sendResponse);
     return true;
   }
 });
+
+async function openProfileForVerification(profile) {
+  if (!profile?.profileUrl) {
+    throw new Error("Profile URL is missing.");
+  }
+
+  const tab = await chrome.tabs.create({
+    url: profile.profileUrl,
+    active: false,
+  });
+
+  return tab;
+}
 
 async function handleStartScan(sendResponse) {
   try {
@@ -45,7 +63,7 @@ async function handleStartScan(sendResponse) {
 
     const profiles = scanResponse.profiles ?? [];
 
-    const backendResponse = await fetch("http://localhost:3000/api/search", {
+    const backendResponse = await apiRequest("/api/search", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -60,6 +78,12 @@ async function handleStartScan(sendResponse) {
     if (!backendResponse.ok) {
       throw new Error(result.message || "Backend request failed");
     }
+
+    const nextProfile = await getNextProfileForVerification();
+
+    console.log("Next profile for verification:", nextProfile);
+
+    await openProfileForVerification(nextProfile);
 
     sendResponse({
       success: true,
