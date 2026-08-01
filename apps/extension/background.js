@@ -3,7 +3,10 @@ import {
   getNextProfileForVerification,
 } from "./services/backendApi.js";
 
-import { startVerificationWorker } from "./workers/verificationWorker.js";
+import {
+  startVerificationWorker,
+  startVerificationLifecycle,
+} from "./workers/verificationWorker.js";
 
 startVerificationWorker();
 
@@ -82,12 +85,8 @@ async function handleStartScan(sendResponse) {
     if (!backendResponse.ok) {
       throw new Error(result.message || "Backend request failed");
     }
-
-    const nextProfile = await getNextProfileForVerification();
-
-    console.log("Next profile for verification:", nextProfile);
-
-    await openProfileForVerification(nextProfile);
+    
+    await startVerificationLifecycle();
 
     sendResponse({
       success: true,
