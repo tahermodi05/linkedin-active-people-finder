@@ -123,24 +123,30 @@ async function handleCaptureActivitySnapshot(sendResponse) {
       return;
     }
 
-    await chrome.scripting.executeScript({
+    const [captureResult] = await chrome.scripting.executeScript({
       target: { tabId: activeTab.id },
-      files: ["activitySnapshotCapture.js"],
+      func: () => {
+        const html = document.documentElement.outerHTML
+          .replace(/\r\n/g, "\n")
+          .replace(/>\s+</g, "><")
+          .replace(/></g, ">\n<");
+
+        return {
+          html,
+          filename: "activity-page.html",
+        };
+      },
     });
 
-    const captureResponse = await chrome.tabs.sendMessage(activeTab.id, {
-      type: MESSAGE_TYPES.CAPTURE_ACTIVITY_SNAPSHOT,
-    });
-
-    if (!captureResponse?.success) {
-      throw new Error(captureResponse?.message || "Failed to capture snapshot");
+    if (!captureResult?.result?.html) {
+      throw new Error("Failed to capture snapshot");
     }
 
     sendResponse({
       success: true,
       message: "Activity snapshot captured.",
-      html: captureResponse.html,
-      filename: captureResponse.filename,
+      html: captureResult.result.html,
+      filename: captureResult.result.filename,
     });
   } catch (error) {
     console.error(error);
