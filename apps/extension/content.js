@@ -6,6 +6,8 @@ const SELECTORS = {
   connectionDegree: ".artdeco-entity-lockup__degree",
   mutualConnections:
     ".org-people-profile-card__profile-info > .text-align-center > .lt-line-clamp",
+  loadMoreButton: ".scaffold-finite-scroll__load-button",
+  finiteScrollContainer: ".scaffold-finite-scroll",
 };
 
 function getText(element) {
@@ -89,6 +91,106 @@ function isVisible(element) {
   );
 }
 
+function wait(milliseconds) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, milliseconds);
+  });
+}
+
+async function waitForEmployeeGrowth(previousCount) {
+  const timeout = 10000;
+  const pollInterval = 300;
+
+  const start = Date.now();
+
+  while (Date.now() - start < timeout) {
+    const currentCount = document.querySelectorAll(
+      SELECTORS.employeeCard
+    ).length;
+
+    if (currentCount > previousCount) {
+      console.log(
+        `Employees increased: ${previousCount} → ${currentCount}`
+      );
+      return currentCount;
+    }
+
+    const loadingButton = document.querySelector(
+      SELECTORS.loadMoreButton
+    );
+
+    if (!loadingButton) {
+      await wait(pollInterval);
+      continue;
+    }
+
+    await wait(pollInterval);
+  }
+
+  console.log("Timed out waiting for more employees.");
+
+  return previousCount;
+}
+
+async function loadAllEmployees() {
+  const MAX_LOAD_CLICKS = 100;
+
+  let loadClicks = 0;
+
+  while (loadClicks < MAX_LOAD_CLICKS) {
+    const button = getLoadMoreButton();
+
+    if (!button) {
+      console.log("No more employees to load.");
+      break;
+    }
+
+    const previousCount = document.querySelectorAll(
+      SELECTORS.employeeCard
+    ).length;
+
+    console.log(
+      `Loading batch ${loadClicks + 1}... (${previousCount} employees loaded)`
+    );
+
+    button.click();
+
+    await waitForEmployeeGrowth(previousCount);
+
+    await wait(1000);
+
+    loadClicks++;
+  }
+
+  console.log("Finished loading employees.");
+}
+
+function getLoadMoreButton() {
+  const button = document.querySelector(SELECTORS.loadMoreButton);
+
+  console.log("Load More Button:", button);
+
+  if (!button || button.disabled) {
+    return null;
+  }
+
+  return button;
+}
+
+function clickLoadMoreButton() {
+  const button = getLoadMoreButton();
+
+  if (!button) {
+    return false;
+  }
+
+  console.log("Clicking Show More Results...");
+
+  button.click();
+
+  return true;
+}
+
 function extractProfileFromCard(card) {
   const profileUrl = getProfileLink(card);
   const name = getText(card.querySelector(SELECTORS.name));
@@ -160,7 +262,43 @@ function detectPage() {
   return "unknown";
 }
 
-function handleScanRequest() {
+async function autoScrollUntilLoaded() {
+  let previousCount = 0;
+  let stableRounds = 0;
+
+  while (stableRounds < 3) {
+    const cards = document.querySelectorAll(SELECTORS.employeeCard);
+    const currentCount = cards.length;
+
+    window.scrollTo({
+      top: document.body.scrollHeight,
+      behavior: "smooth",
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    const newCount = document.querySelectorAll(SELECTORS.employeeCard).length;
+
+    if (newCount === currentCount) {
+      stableRounds++;
+    } else {
+      stableRounds = 0;
+    }
+
+    previousCount = newCount;
+  }
+
+  window.scrollTo({
+    top: 0,
+    behavior: "instant",
+  });
+
+  return previousCount;
+}
+
+async function handleScanRequest() {
+  await loadAllEmployees();
+
   return {
     success: true,
     profiles: extractVisibleProfiles(),
@@ -176,10 +314,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return false;
   }
 
-  if (message?.type === "SCAN_SEARCH_RESULTS") {
-    sendResponse(handleScanRequest());
-    return false;
-  }
+ if (message?.type === "SCAN_SEARCH_RESULTS") {
+  handleScanRequest().then(sendResponse);
+  return true;
+}
 
   return false;
 });
