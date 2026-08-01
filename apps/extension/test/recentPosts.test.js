@@ -40,6 +40,25 @@ function createRecentPostsRoot(html) {
   };
 }
 
+test("extractRecentPosts delegates to extractActivityPost for each article", () => {
+  const calls = [];
+  const html = loadSnapshot();
+  const root = createRecentPostsRoot(html);
+
+  const result = extractRecentPosts(root, (item) => {
+    calls.push(item);
+
+    return { activityUrn: item.getAttribute("data-urn") };
+  });
+
+  assert.equal(calls.length, result.posts.length);
+  assert.equal(result.postCount, result.posts.length);
+  assert.deepEqual(
+    calls.map((item) => item.getAttribute("data-urn")),
+    result.posts.map((post) => post.activityUrn)
+  );
+});
+
 test("extractRecentPosts follows the committed snapshot contract", () => {
   const html = loadSnapshot();
   const root = createRecentPostsRoot(html);
