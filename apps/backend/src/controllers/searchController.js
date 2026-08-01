@@ -51,8 +51,7 @@ export async function getNextProfile(req, res, next) {
 
 export async function completeCurrentVerification(req, res, next) {
   try {
-const result = await completeCurrentVerificationService(req.body);
-
+const result = await completeCurrentVerificationService(req.validatedData);
     return successResponse(
       res,
       result,

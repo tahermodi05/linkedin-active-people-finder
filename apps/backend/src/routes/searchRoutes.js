@@ -1,4 +1,5 @@
 import express from "express";
+import { completeVerificationSchema } from "../schemas/completeVerificationSchema.js";
 
 import {
   search,
@@ -13,8 +14,11 @@ import { searchSchema } from "../schemas/searchSchema.js";
 const router = express.Router();
 
 router.post("/", validate(searchSchema), search);
-router.post("/complete", completeCurrentVerification);
-
+router.post(
+  "/complete",
+  validate(completeVerificationSchema),
+  completeCurrentVerification
+);
 router.get("/latest", getLatestScan);
 router.get("/next", getNextProfile);
 
