@@ -3,6 +3,10 @@ import {
   getNextProfileForVerification,
 } from "./services/backendApi.js";
 
+import { startVerificationWorker } from "./workers/verificationWorker.js";
+
+startVerificationWorker();
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "START_SCAN") {
     handleStartScan(sendResponse);
