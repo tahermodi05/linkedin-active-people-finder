@@ -13,6 +13,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     handleStartScan(sendResponse);
     return true;
   }
+
+  if (message.type === MESSAGE_TYPES.CAPTURE_ACTIVITY_SNAPSHOT) {
+    handleCaptureActivitySnapshot(sendResponse);
+    return true;
+  }
 });
 
 async function handleStartScan(sendResponse) {
@@ -76,6 +81,57 @@ async function handleStartScan(sendResponse) {
     sendResponse({
       success: true,
       message: `Sent ${profiles.length} profiles`,
+    });
+  } catch (error) {
+    console.error(error);
+
+    sendResponse({
+      success: false,
+      message: error.message,
+    });
+  }
+}
+
+async function handleCaptureActivitySnapshot(sendResponse) {
+  try {
+    const [activeTab] = await chrome.tabs.query({
+      active: true,
+      currentWindow: true,
+    });
+
+    if (!activeTab?.id) {
+      throw new Error("No active tab found");
+    }
+
+    const pageResponse = await chrome.tabs.sendMessage(activeTab.id, {
+      type: MESSAGE_TYPES.DETECT_PAGE,
+    });
+
+    if (!pageResponse?.success) {
+      throw new Error("Failed to detect page");
+    }
+
+    if (pageResponse.pageType !== "activity") {
+      sendResponse({
+        success: false,
+        message: "Please open a LinkedIn Activity page before capturing.",
+      });
+      return;
+    }
+
+    const captureResponse = await chrome.tabs.sendMessage(activeTab.id, {
+      type: MESSAGE_TYPES.CAPTURE_ACTIVITY_SNAPSHOT,
+    });
+
+    if (!captureResponse?.success) {
+      throw new Error(captureResponse?.message || "Failed to capture snapshot");
+    }
+
+    sendResponse({
+      success: true,
+      message: "Activity snapshot captured.",
+      html: captureResponse.html,
+      filename: captureResponse.filename,
     });
   } catch (error) {
     console.error(error);

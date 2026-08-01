@@ -229,6 +229,10 @@ function detectPage() {
     return "search";
   }
 
+  if (/recent-activity|activity/i.test(pathname)) {
+    return "activity";
+  }
+
   if (/^\/company\/[^/]+\/people\/?$/.test(pathname)) {
     return "company-people";
   }
@@ -254,6 +258,37 @@ async function handleScanRequest() {
   return {
     success: true,
     profiles: extractVisibleProfiles(),
+  };
+}
+
+function normalizeWhitespace(text) {
+  return text.replace(/\r\n/g, "\n");
+}
+
+function formatCapturedHtml(html) {
+  const normalized = normalizeWhitespace(html)
+    .replace(/>\s+</g, "><")
+    .replace(/></g, ">\n<");
+
+  return normalized;
+}
+
+async function handleActivitySnapshotCapture() {
+  const { pathname } = window.location;
+
+  if (!/recent-activity|activity/i.test(pathname)) {
+    return {
+      success: false,
+      message: "Open a LinkedIn Activity page before capturing a snapshot.",
+    };
+  }
+
+  const html = formatCapturedHtml(document.documentElement.outerHTML);
+
+  return {
+    success: true,
+    html,
+    filename: "activity-page.html",
   };
 }
 
@@ -321,6 +356,11 @@ function registerMessageListener() {
           success: true,
         });
       });
+      return true;
+    }
+
+    if (message?.type === MESSAGE_TYPES.CAPTURE_ACTIVITY_SNAPSHOT) {
+      handleActivitySnapshotCapture().then(sendResponse);
       return true;
     }
 

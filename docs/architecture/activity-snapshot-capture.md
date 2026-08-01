@@ -31,3 +31,8 @@ This keeps Activity snapshots aligned with the existing committed snapshot conve
 This proposal reuses the existing extension architecture rather than introducing a separate capture path.
 
 It keeps snapshot capture a manual documentation workflow, avoids runtime behavior changes, and preserves a clear boundary between page-context serialization and downstream extractor work.
+
+# Developer Workflow
+- Trigger capture from the extension popup with `Capture Activity Snapshot`.
+- The HTML is produced in the content script from `document.documentElement.outerHTML` and returned through the background relay.
+- The popup downloads the capture as `activity-page.html` and also shows the formatted HTML in a readonly text area for direct copy into `docs/html-snapshots/activity-page.html`.
