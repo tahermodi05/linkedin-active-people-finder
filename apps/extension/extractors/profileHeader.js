@@ -4,59 +4,56 @@ function getText(element) {
 
 function getTopCard(root) {
   try {
-    return root?.querySelector?.('[id$="Topcard"]') || null;
+    return root?.querySelector?.('section[aria-label="Primary content"]') || root || null;
   } catch {
     return null;
   }
 }
 
-function getProfileLink(root) {
+function getIdentitySection(root) {
+  const topCard = getTopCard(root);
+
+  if (!topCard) {
+    return null;
+  }
+
   try {
-    return (
-      getTopCard(root)?.querySelector('a[href^="https://www.linkedin.com/in/"]') ||
-      null
-    );
+    return topCard.querySelector("h2") || null;
   } catch {
     return null;
   }
 }
 
-function getContactInfoLink(root) {
+function getProfileInfoSection(root) {
+  const topCard = getTopCard(root);
+
+  if (!topCard) {
+    return null;
+  }
+
   try {
-    return [...(getTopCard(root)?.querySelectorAll('a[href="#"]') || [])].find(
-      (link) => getText(link) === "Contact info"
-    ) || null;
+    return [...topCard.querySelectorAll('a[href="#"]')].find((link) => getText(link) === "Contact info") || null;
   } catch {
     return null;
   }
 }
 
-function getSignalBlock(root) {
+function getSocialSignalsSection(root) {
+  const topCard = getTopCard(root);
+
+  if (!topCard) {
+    return null;
+  }
+
   try {
-    return [...(getTopCard(root)?.querySelectorAll("div") || [])].find((element) => {
-      const hasFollowers = [...element.querySelectorAll("p")].some((paragraph) =>
-        /^\d[\d,]* followers$/i.test(getText(paragraph) || "")
-      );
-      const hasConnections = [...element.querySelectorAll("p")].some((paragraph) =>
-        getText(paragraph)?.toLowerCase() === "connections"
-      );
-      const mutualLink = element.querySelector('a[target="_blank"]');
-      const href = mutualLink?.getAttribute("href") || "";
-
-      return (
-        hasFollowers &&
-        hasConnections &&
-        href.includes("connectionOf=%5B%22ACo") &&
-        /mutual connections/i.test(getText(mutualLink) || "")
-      );
-    }) || null;
+    return [...topCard.querySelectorAll('a[target="_blank"]')].find((link) => /mutual connections/i.test(getText(link) || "")) || null;
   } catch {
     return null;
   }
 }
 
-function getProfileUrl(root) {
-  const href = root?.location?.href || root?.URL || null;
+function extractProfileUrl(root) {
+  const href = root?.ownerDocument?.defaultView?.location?.href || null;
 
   if (!href) {
     return null;
@@ -78,146 +75,50 @@ function getProfileUrl(root) {
   }
 }
 
-function extractName(root) {
-  const profileLink = getProfileLink(root);
+function extractFullName(root) {
+  const identitySection = getIdentitySection(root);
 
-  if (!profileLink) {
+  if (!identitySection) {
     return null;
   }
 
   try {
-    return getText(profileLink.querySelector("p"));
+    return getText(identitySection);
   } catch {
     return null;
   }
 }
 
 function extractHeadline(root) {
-  const profileLink = getProfileLink(root);
-
-  if (!profileLink) {
-    return null;
-  }
-
-  try {
-    const headlineContainer = profileLink.querySelector("div > div");
-
-    return getText(headlineContainer?.querySelector("p"));
-  } catch {
-    return null;
-  }
+  return null;
 }
 
-function extractCompany(root) {
-  const contactInfoLink = getContactInfoLink(root);
-
-  if (!contactInfoLink) {
-    return null;
-  }
-
-  try {
-    const row = contactInfoLink.closest("div");
-    const companyParagraph = row?.previousElementSibling?.querySelector?.("p");
-
-    return getText(companyParagraph);
-  } catch {
-    return null;
-  }
+function extractLocation() {
+  return null;
 }
 
-function extractLocation(root) {
-  const contactInfoLink = getContactInfoLink(root);
-
-  if (!contactInfoLink) {
-    return null;
-  }
-
-  try {
-    const row = contactInfoLink.closest("div");
-    const locationParagraph = row?.querySelector?.("p");
-
-    return getText(locationParagraph);
-  } catch {
-    return null;
-  }
-}
-
-function extractFollowers(root) {
-  const signalBlock = getSignalBlock(root);
-
-  if (!signalBlock) {
-    return null;
-  }
-
-  try {
-    const followerParagraph = [...signalBlock.querySelectorAll("p")].find((paragraph) =>
-      /^\d[\d,]* followers$/i.test(getText(paragraph) || "")
-    );
-
-    return getText(followerParagraph);
-  } catch {
-    return null;
-  }
-}
-
-function extractConnections(root) {
-  const signalBlock = getSignalBlock(root);
-
-  if (!signalBlock) {
-    return null;
-  }
-
-  try {
-    const labelParagraph = [...signalBlock.querySelectorAll("p")].find(
-      (paragraph) => getText(paragraph)?.toLowerCase() === "connections"
-    );
-
-    const count = getText(labelParagraph?.previousElementSibling);
-
-    return count ? `${count} connections` : null;
-  } catch {
-    return null;
-  }
-}
-
-function extractMutualConnections(root) {
-  const signalBlock = getSignalBlock(root);
-
-  if (!signalBlock) {
-    return null;
-  }
-
-  try {
-    const link = signalBlock.querySelector('a[target="_blank"]');
-    const text = getText(link);
-
-    return /mutual connections/i.test(text || "") ? text : null;
-  } catch {
-    return null;
-  }
-}
-
-export function extractIdentity(root) {
-  return {
-    profileUrl: getProfileUrl(root),
-    name: extractName(root),
-    headline: extractHeadline(root),
-    company: extractCompany(root),
-    location: extractLocation(root),
-  };
-}
-
-export function extractNetworkSignals(root) {
-  return {
-    followers: extractFollowers(root),
-    connections: extractConnections(root),
-    mutualConnections: extractMutualConnections(root),
-  };
+function extractCurrentCompany() {
+  return null;
 }
 
 export function extractProfileHeader(root) {
+  const topCard = getTopCard(root);
+
+  if (!topCard) {
+    return {
+      profileUrl: null,
+      fullName: null,
+      headline: null,
+      location: null,
+      currentCompany: null,
+    };
+  }
+
   return {
-    ...extractIdentity(root),
-    ...extractNetworkSignals(root),
+    profileUrl: extractProfileUrl(root),
+    fullName: extractFullName(root),
+    headline: extractHeadline(root),
+    location: extractLocation(root),
+    currentCompany: extractCurrentCompany(root),
   };
 }
