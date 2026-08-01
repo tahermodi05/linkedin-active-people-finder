@@ -1,3 +1,5 @@
+import { MESSAGE_TYPES } from "./shared/messageTypes.js";
+
 const SELECTORS = {
   employeeCard: ".org-people-profile-card__profile-card-spacing",
   profileLink: ".artdeco-entity-lockup__title a[href*='/in/']",
@@ -8,6 +10,10 @@ const SELECTORS = {
     ".org-people-profile-card__profile-info > .text-align-center > .lt-line-clamp",
   loadMoreButton: ".scaffold-finite-scroll__load-button",
 };
+
+const profileHeaderExtractor = import(
+  chrome.runtime.getURL("extractors/profileHeader.js")
+);
 
 function getText(element) {
   return element?.textContent?.replace(/\s+/g, " ").trim() || null;
@@ -251,8 +257,26 @@ async function handleScanRequest() {
   };
 }
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message?.type === "DETECT_PAGE") {
+function notifyProfilePageReady() {
+  if (detectPage() !== "profile") {
+    return;
+  }
+
+  const profileUrl = normalizeProfileUrl(window.location.href);
+
+  if (!profileUrl) {
+    return;
+  }
+
+  chrome.runtime.sendMessage({
+    type: MESSAGE_TYPES.PROFILE_PAGE_READY,
+    profileUrl,
+  });
+}
+
+function registerMessageListener() {
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message?.type === MESSAGE_TYPES.DETECT_PAGE) {
     sendResponse({
       success: true,
       pageType: detectPage(),
@@ -260,10 +284,49 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return false;
   }
 
- if (message?.type === "SCAN_SEARCH_RESULTS") {
-  handleScanRequest().then(sendResponse);
-  return true;
+    if (message?.type === MESSAGE_TYPES.SCAN_SEARCH_RESULTS) {
+      handleScanRequest().then(sendResponse);
+      return true;
+    }
+
+    if (message?.type === MESSAGE_TYPES.VERIFY_PROFILE) {
+      console.log("Verification request received");
+
+      profileHeaderExtractor.then(({ extractProfileHeader }) => {
+        const extractedProfile = extractProfileHeader(document);
+        const profileUrl = message.payload.profileUrl;
+
+        if (!extractedProfile.name) {
+          sendResponse({
+            success: false,
+          });
+          return;
+        }
+
+        chrome.runtime.sendMessage({
+          type: MESSAGE_TYPES.PROFILE_VERIFIED,
+          payload: {
+            profileUrl,
+            name: extractedProfile.name,
+            verified: true,
+            headline: extractedProfile.headline,
+            company: extractedProfile.company,
+            location: extractedProfile.location,
+            followers: extractedProfile.followers,
+            connections: extractedProfile.connections,
+            mutualConnections: extractedProfile.mutualConnections,
+          },
+        });
+        sendResponse({
+          success: true,
+        });
+      });
+      return true;
+    }
+
+    return false;
+  });
 }
 
-  return false;
-});
+registerMessageListener();
+notifyProfilePageReady();

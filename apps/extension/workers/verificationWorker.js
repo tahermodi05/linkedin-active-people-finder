@@ -1,4 +1,5 @@
 import { getNextProfileForVerification } from "../services/backendApi.js";
+import { MESSAGE_TYPES } from "../shared/messageTypes.js";
 
 export async function startVerificationWorker() {
   console.log("Verification Worker initialized");
@@ -21,16 +22,46 @@ async function openVerificationTab(profile) {
 
 function waitForProfileReady(tabId) {
   return new Promise((resolve) => {
-    function onTabUpdated(updatedTabId, changeInfo) {
-      if (updatedTabId !== tabId || changeInfo.status !== "complete") {
+    function onRuntimeMessage(message, sender) {
+      if (
+        message?.type !== MESSAGE_TYPES.PROFILE_PAGE_READY ||
+        sender.tab?.id !== tabId
+      ) {
         return;
       }
 
-      chrome.tabs.onUpdated.removeListener(onTabUpdated);
+      chrome.runtime.onMessage.removeListener(onRuntimeMessage);
       resolve();
     }
 
-    chrome.tabs.onUpdated.addListener(onTabUpdated);
+    chrome.runtime.onMessage.addListener(onRuntimeMessage);
+  });
+}
+
+async function requestProfileVerification(tabId, profileUrl) {
+  return chrome.tabs.sendMessage(tabId, {
+    type: MESSAGE_TYPES.VERIFY_PROFILE,
+    payload: {
+      profileUrl,
+    },
+  });
+}
+
+function waitForVerificationResult(tabId) {
+  return new Promise((resolve) => {
+    function onRuntimeMessage(message, sender) {
+      if (
+        message?.type !== MESSAGE_TYPES.PROFILE_VERIFIED ||
+        sender.tab?.id !== tabId
+      ) {
+        return;
+      }
+
+      chrome.runtime.onMessage.removeListener(onRuntimeMessage);
+      resolve(message.payload);
+    }
+
+    chrome.runtime.onMessage.addListener(onRuntimeMessage);
   });
 }
 
@@ -44,4 +75,15 @@ export async function startVerificationLifecycle() {
   await waitForProfileReady(tab.id);
 
   console.log("Profile page ready");
+
+  // Start listening BEFORE sending the verification request.
+  const verificationPromise = waitForVerificationResult(tab.id);
+
+  await requestProfileVerification(tab.id, profile.profileUrl);
+
+  console.log("Verification requested");
+
+  const verificationResult = await verificationPromise;
+
+  console.log("Verification completed", verificationResult);
 }

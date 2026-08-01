@@ -1,4 +1,5 @@
 import { apiRequest } from "./services/backendApi.js";
+import { MESSAGE_TYPES } from "./shared/messageTypes.js";
 
 import {
   startVerificationWorker,
@@ -8,7 +9,7 @@ import {
 startVerificationWorker();
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === "START_SCAN") {
+  if (message.type === MESSAGE_TYPES.START_SCAN) {
     handleStartScan(sendResponse);
     return true;
   }
@@ -26,7 +27,7 @@ async function handleStartScan(sendResponse) {
     }
 
     const pageResponse = await chrome.tabs.sendMessage(activeTab.id, {
-      type: "DETECT_PAGE",
+      type: MESSAGE_TYPES.DETECT_PAGE,
     });
 
     if (!pageResponse?.success) {
@@ -45,7 +46,7 @@ async function handleStartScan(sendResponse) {
     }
 
     const scanResponse = await chrome.tabs.sendMessage(activeTab.id, {
-      type: "SCAN_SEARCH_RESULTS",
+      type: MESSAGE_TYPES.SCAN_SEARCH_RESULTS,
     });
 
     if (!scanResponse?.success) {
