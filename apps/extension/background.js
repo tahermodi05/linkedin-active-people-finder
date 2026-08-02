@@ -113,23 +113,20 @@ async function handleCaptureActivitySnapshot(sendResponse) {
       return;
     }
 
-    const url = new URL(pageUrl);
-
-    if (!/recent-activity|activity/i.test(url.pathname)) {
-      sendResponse({
-        success: false,
-        message: "Please open a LinkedIn Activity page before capturing.",
-      });
-      return;
-    }
-
     const [captureResult] = await chrome.scripting.executeScript({
       target: { tabId: activeTab.id },
       func: () => {
+
+        console.log("readyState:", document.readyState);
+        console.log("articles:", document.querySelectorAll('[role="article"]').length);
+
+        console.log("readyState:", document.readyState);
+        console.log("articles:", document.querySelectorAll('[role="article"]').length);
+
         const html = document.documentElement.outerHTML
-          .replace(/\r\n/g, "\n")
-          .replace(/>\s+</g, "><")
-          .replace(/></g, ">\n<");
+        .replace(/\r\n/g, "\n")
+        .replace(/>\s+</g, "><")
+        .replace(/></g, ">\n<");
 
         return {
           html,
