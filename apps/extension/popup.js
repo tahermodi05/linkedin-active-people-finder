@@ -1,7 +1,53 @@
 const statusElement = document.getElementById("status");
 const scanButton = document.getElementById("scanButton");
+const viewResultsButton = document.getElementById("viewResultsButton");
 const captureActivityButton = document.getElementById("captureActivityButton");
 const snapshotOutput = document.getElementById("snapshotOutput");
+
+async function fetchScanResults() {
+  const response = await fetch("http://localhost:3000/api/search/results");
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.message || "Failed to load results");
+  }
+
+  return result.data || [];
+}
+
+function summarizeActivityIntelligence(activityIntelligence) {
+  const postCount = activityIntelligence?.recentPosts?.postCount ?? 0;
+  const validPosts = activityIntelligence?.signals?.validPosts ?? 0;
+  const totalPosts = activityIntelligence?.signals?.totalPosts ?? 0;
+
+  return `posts: ${postCount}, valid: ${validPosts}, total: ${totalPosts}`;
+}
+
+function renderResults(results) {
+  if (!results.length) {
+    snapshotOutput.value = "No results yet.";
+    statusElement.textContent = "No completed scans found.";
+    return;
+  }
+
+  snapshotOutput.value = results
+    .map((profile, index) => {
+      return [
+        `${index + 1}. ${profile.name || "Unknown"}`,
+        `URL: ${profile.profileUrl || "N/A"}`,
+        `currentlyWorksHere: ${String(Boolean(profile.currentlyWorksHere))}`,
+        `verificationStatus: ${profile.verificationStatus || "N/A"}`,
+        `activity: ${summarizeActivityIntelligence(
+          profile.activityIntelligence
+        )}`,
+      ].join("\n");
+    })
+    .join("\n\n");
+
+  statusElement.textContent = `Loaded ${results.length} result${
+    results.length === 1 ? "" : "s"
+  }.`;
+}
 
 scanButton.addEventListener("click", async () => {
   statusElement.textContent = "Scanning...";
@@ -19,6 +65,23 @@ scanButton.addEventListener("click", async () => {
     statusElement.textContent = "Failed to contact background";
   } finally {
     scanButton.disabled = false;
+  }
+});
+
+viewResultsButton.addEventListener("click", async () => {
+  statusElement.textContent = "Loading results...";
+  viewResultsButton.disabled = true;
+
+  try {
+    const results = await fetchScanResults();
+    renderResults(results);
+  } catch (error) {
+    console.error(error);
+    snapshotOutput.value = "";
+    statusElement.textContent =
+      error.message || "Failed to load scan results";
+  } finally {
+    viewResultsButton.disabled = false;
   }
 });
 

@@ -1,6 +1,7 @@
 import {
   searchPeople,
   getLatestScan as getLatestScanService,
+  getScanResults as getScanResultsService,
   getNextProfileForVerification,
   completeCurrentVerification as completeCurrentVerificationService,
 } from "../services/searchService.js";
@@ -29,6 +30,20 @@ export async function getLatestScan(req, res, next) {
       res,
       result,
       "Latest scan retrieved"
+    );
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getScanResults(req, res, next) {
+  try {
+    const result = await getScanResultsService();
+
+    return successResponse(
+      res,
+      result,
+      "Scan results retrieved"
     );
   } catch (error) {
     next(error);

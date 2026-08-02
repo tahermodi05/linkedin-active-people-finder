@@ -2,53 +2,14 @@ function getText(element) {
   return element?.textContent?.replace(/\s+/g, " ").trim() || null;
 }
 
-function getTopCard(root) {
+function getLeafTexts(root) {
   try {
-    return root?.querySelector?.('section[aria-label="Primary content"]') || root || null;
+    return [...root.querySelectorAll("main *")]
+      .filter((element) => element.children.length === 0)
+      .map((element) => getText(element))
+      .filter(Boolean);
   } catch {
-    return null;
-  }
-}
-
-function getIdentitySection(root) {
-  const topCard = getTopCard(root);
-
-  if (!topCard) {
-    return null;
-  }
-
-  try {
-    return topCard.querySelector("h2") || null;
-  } catch {
-    return null;
-  }
-}
-
-function getProfileInfoSection(root) {
-  const topCard = getTopCard(root);
-
-  if (!topCard) {
-    return null;
-  }
-
-  try {
-    return [...topCard.querySelectorAll('a[href="#"]')].find((link) => getText(link) === "Contact info") || null;
-  } catch {
-    return null;
-  }
-}
-
-function getSocialSignalsSection(root) {
-  const topCard = getTopCard(root);
-
-  if (!topCard) {
-    return null;
-  }
-
-  try {
-    return [...topCard.querySelectorAll('a[target="_blank"]')].find((link) => /mutual connections/i.test(getText(link) || "")) || null;
-  } catch {
-    return null;
+    return [];
   }
 }
 
@@ -76,44 +37,84 @@ function extractProfileUrl(root) {
 }
 
 function extractFullName(root) {
-  const identitySection = getIdentitySection(root);
-
-  if (!identitySection) {
-    return null;
-  }
-
   try {
-    return getText(identitySection);
+    const topCard =
+      root.querySelector('section[aria-label="Primary content"]') || root;
+
+    const oldName = topCard.querySelector("h2");
+
+    if (oldName) {
+      return getText(oldName);
+    }
+
+    return getText(root.querySelector("main h2"));
   } catch {
     return null;
   }
 }
 
 function extractHeadline(root) {
-  return null;
+  try {
+    const topCard =
+      root.querySelector('section[aria-label="Primary content"]') || root;
+
+    const texts = [...topCard.querySelectorAll("p")]
+      .map((element) => getText(element))
+      .filter(Boolean);
+
+    let connectionIndex = -1;
+
+    texts.forEach((text, index) => {
+      if (/^·\s*(1st|2nd|3rd\+)$/.test(text)) {
+        connectionIndex = index;
+      }
+    });
+
+    if (
+      connectionIndex !== -1 &&
+      texts[connectionIndex + 1]
+    ) {
+      return texts[connectionIndex + 1];
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
 }
 
-function extractLocation() {
-  return null;
+function extractLocation(root) {
+  const texts = getLeafTexts(root);
+
+  return (
+    texts.find((text) =>
+      /^[^@]+,\s*[^@]+,\s*(India|USA|Canada|UK|Australia)$/i.test(text)
+    ) || null
+  );
 }
 
-function extractCurrentCompany() {
-  return null;
+function extractCurrentCompany(root) {
+  const texts = getLeafTexts(root);
+
+  const ignored = new Set([
+    extractFullName(root),
+    extractHeadline(root),
+    extractLocation(root),
+  ]);
+
+  return (
+    texts.find(
+      (text) =>
+        !ignored.has(text) &&
+        !text.includes("followers") &&
+        !text.includes("connections") &&
+        !text.includes("mutual") &&
+        text.length > 1
+    ) || null
+  );
 }
 
 export function extractProfileHeader(root) {
-  const topCard = getTopCard(root);
-
-  if (!topCard) {
-    return {
-      profileUrl: null,
-      fullName: null,
-      headline: null,
-      location: null,
-      currentCompany: null,
-    };
-  }
-
   return {
     profileUrl: extractProfileUrl(root),
     fullName: extractFullName(root),

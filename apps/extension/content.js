@@ -1,4 +1,15 @@
-import { MESSAGE_TYPES } from "./shared/messageTypes.js";
+const MESSAGE_TYPES = {
+  START_SCAN: "START_SCAN",
+  DETECT_PAGE: "DETECT_PAGE",
+  SCAN_SEARCH_RESULTS: "SCAN_SEARCH_RESULTS",
+  CAPTURE_ACTIVITY_SNAPSHOT: "CAPTURE_ACTIVITY_SNAPSHOT",
+  PROFILE_PAGE_READY: "PROFILE_PAGE_READY",
+  VERIFY_PROFILE: "VERIFY_PROFILE",
+  PROFILE_VERIFIED: "PROFILE_VERIFIED",
+  ACTIVITY_PAGE_READY: "ACTIVITY_PAGE_READY",
+  EXTRACT_ACTIVITY_INTELLIGENCE: "EXTRACT_ACTIVITY_INTELLIGENCE",
+  ACTIVITY_INTELLIGENCE_EXTRACTED: "ACTIVITY_INTELLIGENCE_EXTRACTED",
+};
 
 const SELECTORS = {
   employeeCard: ".org-people-profile-card__profile-card-spacing",
@@ -13,6 +24,9 @@ const SELECTORS = {
 
 const profileHeaderExtractor = import(
   chrome.runtime.getURL("extractors/profileHeader.js")
+);
+const activityIntelligenceModule = import(
+  chrome.runtime.getURL("intelligence/activityIntelligence.js")
 );
 
 function getText(element) {
@@ -278,15 +292,101 @@ function notifyProfilePageReady() {
   });
 }
 
+function notifyActivityPageReady() {
+  if (detectPage() !== "activity") {
+    return;
+  }
+
+  chrome.runtime.sendMessage({
+    type: MESSAGE_TYPES.ACTIVITY_PAGE_READY,
+  });
+}
+
+function serializeActivityIntelligence(intelligence) {
+  return {
+    recentPosts: {
+      postCount: intelligence?.recentPosts?.postCount ?? 0,
+      posts: Array.isArray(intelligence?.recentPosts?.posts)
+        ? intelligence.recentPosts.posts.map((post) => ({
+            success: post?.success ?? null,
+            urn: post?.urn ?? null,
+            type: post?.type ?? null,
+            author: post?.author ?? null,
+            authorProfileUrl: post?.authorProfileUrl ?? null,
+            text: post?.text ?? null,
+            images: Array.isArray(post?.images) ? post.images : [],
+            engagement: {
+              reactions: post?.engagement?.reactions ?? null,
+              comments: post?.engagement?.comments ?? null,
+              reposts: post?.engagement?.reposts ?? null,
+            },
+            video: post?.video
+              ? {
+                  hasVideo: post.video.hasVideo ?? null,
+                  src: post.video.src ?? null,
+                  poster: post.video.poster ?? null,
+                }
+              : null,
+            document: post?.document
+              ? {
+                  hasDocument: post.document.hasDocument ?? null,
+                  title: post.document.title ?? null,
+                  src: post.document.src ?? null,
+                }
+              : null,
+            reason: post?.reason ?? null,
+          }))
+        : [],
+    },
+    signals: {
+      totalPosts: intelligence?.signals?.totalPosts ?? 0,
+      hasPosts: intelligence?.signals?.hasPosts ?? false,
+      validPosts: intelligence?.signals?.validPosts ?? 0,
+    },
+    analysis: {
+      totalPosts: intelligence?.analysis?.totalPosts ?? 0,
+      mediaBreakdown: {
+        text: intelligence?.analysis?.mediaBreakdown?.text ?? 0,
+        image: intelligence?.analysis?.mediaBreakdown?.image ?? 0,
+        video: intelligence?.analysis?.mediaBreakdown?.video ?? 0,
+        document: intelligence?.analysis?.mediaBreakdown?.document ?? 0,
+      },
+    },
+  };
+}
+
+async function waitForActivityPosts() {
+  const timeout = 15000;
+  const pollInterval = 500;
+  const start = Date.now();
+
+  console.log("Waiting for activity posts...");
+
+  while (Date.now() - start < timeout) {
+    const postCount = document.querySelectorAll(".feed-shared-update-v2").length;
+
+    if (postCount > 0) {
+      console.log("Activity posts found:", postCount);
+      return postCount;
+    }
+
+    await wait(pollInterval);
+  }
+
+  console.log("Timed out waiting for activity posts.");
+
+  return document.querySelectorAll(".feed-shared-update-v2").length;
+}
+
 function registerMessageListener() {
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message?.type === MESSAGE_TYPES.DETECT_PAGE) {
-    sendResponse({
-      success: true,
-      pageType: detectPage(),
-    });
-    return false;
-  }
+      sendResponse({
+        success: true,
+        pageType: detectPage(),
+      });
+      return false;
+    }
 
     if (message?.type === MESSAGE_TYPES.SCAN_SEARCH_RESULTS) {
       handleScanRequest().then(sendResponse);
@@ -294,35 +394,55 @@ function registerMessageListener() {
     }
 
     if (message?.type === MESSAGE_TYPES.VERIFY_PROFILE) {
-      console.log("Verification request received");
-
       profileHeaderExtractor.then(({ extractProfileHeader }) => {
-        const extractedProfile = extractProfileHeader(document);
-        const profileUrl = message.payload.profileUrl;
+        try {
+          console.log("Verification request received");
+          console.log("Running profile extraction");
 
-        if (!extractedProfile.name) {
-          sendResponse({
-            success: false,
+          const extractedProfile = extractProfileHeader(document);
+          console.log("Extraction finished", extractedProfile);
+
+          const profileUrl = message.payload.profileUrl;
+
+          chrome.runtime.sendMessage({
+            type: MESSAGE_TYPES.PROFILE_VERIFIED,
+            payload: {
+              profileUrl,
+              name: extractedProfile.name,
+              verified: true,
+              headline: extractedProfile.headline,
+              company: extractedProfile.company,
+              location: extractedProfile.location,
+              followers: extractedProfile.followers,
+              connections: extractedProfile.connections,
+              mutualConnections: extractedProfile.mutualConnections,
+            },
           });
-          return;
+
+          console.log("PROFILE_VERIFIED sent");
+        } catch (error) {
+          console.error("Profile verification failed:", error);
         }
+      });
+
+      return false;
+    }
+    if (message?.type === MESSAGE_TYPES.EXTRACT_ACTIVITY_INTELLIGENCE) {
+      console.log("Activity extraction request received");
+
+      waitForActivityPosts().then(() => {
+        activityIntelligenceModule.then(({ buildActivityIntelligence }) => {
+        const intelligence = buildActivityIntelligence(document);
+        const payload = serializeActivityIntelligence(intelligence);
 
         chrome.runtime.sendMessage({
-          type: MESSAGE_TYPES.PROFILE_VERIFIED,
-          payload: {
-            profileUrl,
-            name: extractedProfile.name,
-            verified: true,
-            headline: extractedProfile.headline,
-            company: extractedProfile.company,
-            location: extractedProfile.location,
-            followers: extractedProfile.followers,
-            connections: extractedProfile.connections,
-            mutualConnections: extractedProfile.mutualConnections,
-          },
+          type: MESSAGE_TYPES.ACTIVITY_INTELLIGENCE_EXTRACTED,
+          payload,
         });
+
         sendResponse({
           success: true,
+        });
         });
       });
       return true;
@@ -334,3 +454,4 @@ function registerMessageListener() {
 
 registerMessageListener();
 notifyProfilePageReady();
+notifyActivityPageReady();

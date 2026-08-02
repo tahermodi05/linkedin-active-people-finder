@@ -29,6 +29,10 @@ export async function getLatestScan() {
   };
 }
 
+export async function getScanResults() {
+  return getLatestScanFromStore();
+}
+
 export async function getNextProfileForVerification() {
   return getNextPendingProfile();
 }
@@ -37,6 +41,7 @@ export async function completeCurrentVerification(data) {
   const updatedProfile = updateCurrentProfileVerification({
     verificationStatus: data.verificationStatus,
     currentlyWorksHere: data.currentlyWorksHere,
+    activityIntelligence: data.activityIntelligence,
     verifiedAt: new Date().toISOString(),
   });
 

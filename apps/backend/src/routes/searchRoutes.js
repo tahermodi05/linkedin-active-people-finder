@@ -4,6 +4,7 @@ import { completeVerificationSchema } from "../schemas/completeVerificationSchem
 import {
   search,
   getLatestScan,
+  getScanResults,
   getNextProfile,
   completeCurrentVerification,
 } from "../controllers/searchController.js";
@@ -19,6 +20,7 @@ router.post(
   validate(completeVerificationSchema),
   completeCurrentVerification
 );
+router.get("/results", getScanResults);
 router.get("/latest", getLatestScan);
 router.get("/next", getNextProfile);
 

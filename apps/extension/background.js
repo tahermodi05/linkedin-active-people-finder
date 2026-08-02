@@ -73,15 +73,16 @@ async function handleStartScan(sendResponse) {
     const result = await backendResponse.json();
 
     if (!backendResponse.ok) {
-      throw new Error(result.message || "Backend request failed");
-    }
-    
-    await startVerificationLifecycle();
+  throw new Error(result.message || "Backend request failed");
+}
 
-    sendResponse({
-      success: true,
-      message: `Sent ${profiles.length} profiles`,
-    });
+await startVerificationLifecycle();
+
+sendResponse({
+  success: true,
+  message: `Sent ${profiles.length} profiles`,
+});
+
   } catch (error) {
     console.error(error);
 
