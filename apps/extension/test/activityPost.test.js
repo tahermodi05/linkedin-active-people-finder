@@ -1,92 +1,86 @@
+import test from "node:test";
 import assert from "node:assert/strict";
-import { test } from "node:test";
+
+import { JSDOM } from "jsdom";
 
 import { extractActivityPost } from "../extractors/activityPost.js";
 
-function createActivityPostRoot(urn, textContent = "  I spent\n\n the last two weeks breaking down  ") {
-  return {
-    getAttribute(name) {
-      if (name === "data-urn") {
-        return urn;
-      }
+function createDom(articleHtml) {
+  const dom = new JSDOM(`<!doctype html><html><body>${articleHtml}</body></html>`);
 
-      return null;
-    },
-    querySelector(selector) {
-      if (
-        selector === ".update-components-update-v2__commentary" ||
-        selector === ".feed-shared-inline-show-more-text"
-      ) {
-        if (textContent === null) {
-          return null;
-        }
-
-        return {
-          textContent,
-        };
-      }
-
-      return null;
-    },
-  };
+  return dom.window.document;
 }
 
-test("extractActivityPost returns the committed object shape", () => {
-  const result = extractActivityPost(
-    createActivityPostRoot("urn:li:activity:7487759344000794624")
-  );
+test("extracts image activity from a normalized article DOM", () => {
+  const document = createDom(`
+    <article role="article" data-urn="urn:li:activity:1">
+      <header>
+        <a href="https://www.linkedin.com/in/example">
+          <span>Example Author</span>
+        </a>
+      </header>
+      <span data-testid="expandable-text-box">Image post text</span>
+      <img class="feed-shared-image-viewer__image" src="https://example.com/image.jpg" />
+    </article>
+  `);
 
-  assert.deepEqual(Object.keys(result), ["activityUrn", "type", "content"]);
-  assert.deepEqual(result, {
-    activityUrn: "urn:li:activity:7487759344000794624",
-    type: "unknown",
-    content: {
-      text: "I spent the last two weeks breaking down",
-    },
-  });
+  const result = extractActivityPost(document);
+
+  assert.equal(result.success, true);
+  assert.equal(result.type, "image");
+  assert.equal(result.author, "Example Author");
+  assert.equal(result.authorProfileUrl, "https://www.linkedin.com/in/example");
+  assert.equal(result.text, "Image post text");
+  assert.deepEqual(result.images, ["https://example.com/image.jpg"]);
 });
 
-test("extractActivityPost returns null when observable evidence is absent", () => {
-  const result = extractActivityPost(createActivityPostRoot(null, null));
+test("extracts video activity from a normalized article DOM", () => {
+  const document = createDom(`
+    <article role="article" data-urn="urn:li:activity:2">
+      <header>
+        <a href="https://www.linkedin.com/in/video-author">
+          <span>Video Author</span>
+        </a>
+      </header>
+      <span data-testid="expandable-text-box">Video post text</span>
+      <video class="vjs-tech" src="https://example.com/video.mp4"></video>
+      <div class="vjs-poster">
+        <img src="https://example.com/poster.jpg" />
+      </div>
+    </article>
+  `);
 
-  assert.deepEqual(result, {
-    activityUrn: null,
-    type: "unknown",
-    content: {
-      text: null,
-    },
-  });
+  const result = extractActivityPost(document);
+
+  assert.equal(result.success, true);
+  assert.equal(result.type, "video");
+  assert.equal(result.video?.hasVideo, true);
+  assert.equal(result.video?.src, "https://example.com/video.mp4");
+  assert.equal(result.video?.poster, "https://example.com/poster.jpg");
 });
 
-test("extractActivityPost is deterministic", () => {
-  const input = createActivityPostRoot("urn:li:activity:7487759344000794624");
+test("extracts document activity from a normalized article DOM", () => {
+  const document = createDom(`
+    <article role="article" data-urn="urn:li:activity:3">
+      <header>
+        <a href="https://www.linkedin.com/in/document-author">
+          <span>Document Author</span>
+        </a>
+      </header>
+      <span data-testid="expandable-text-box">Document post text</span>
+      <iframe
+        class="document-s-container__document-element"
+        title="Document title"
+        src="https://example.com/document"
+      ></iframe>
+    </article>
+  `);
 
-  const first = extractActivityPost(input);
-  const second = extractActivityPost(input);
+  const result = extractActivityPost(document);
 
-  assert.deepEqual(first, second);
-});
-
-test("extractActivityPost delegates to the content extractor", () => {
-  const input = createActivityPostRoot(
-    "urn:li:activity:7487759344000794624",
-    "  one\n\n two  "
-  );
-
-  const result = extractActivityPost(input);
-
-  assert.deepEqual(result.content, {
-    text: "one two",
-  });
-});
-
-test("extractActivityPost delegates to the post type extractor", () => {
-  const input = createActivityPostRoot(
-    "urn:li:activity:7487759344000794624",
-    "  one\n\n two  "
-  );
-
-  const result = extractActivityPost(input);
-
-  assert.equal(result.type, "unknown");
+  assert.equal(result.success, true);
+  assert.equal(result.type, "document");
+  assert.equal(result.document?.hasDocument, true);
+  assert.equal(result.document?.title, "Document title");
+  assert.equal(result.document?.src, "https://example.com/document");
 });

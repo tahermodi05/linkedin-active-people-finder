@@ -42,57 +42,12 @@ function createRecentPostsRoot(html) {
   };
 }
 
-test("buildActivityIntelligence orchestrates extractor then signals", () => {
-  const calls = [];
-  const root = {
-    querySelectorAll(selector) {
-      calls.push(["extractRecentPosts", selector]);
-
-      if (selector === 'article[data-urn^="urn:li:activity:"]') {
-        return [
-          {
-            getAttribute(name) {
-              calls.push(["extractActivityPost", name]);
-              return name === "data-urn" ? "urn:li:activity:1" : null;
-            },
-          },
-        ];
-      }
-
+test("buildActivityIntelligence returns empty intelligence when no posts exist", () => {
+  const result = buildActivityIntelligence({
+    querySelectorAll() {
       return [];
     },
-  };
-
-  const result = buildActivityIntelligence(root);
-
-  assert.deepEqual(calls, [
-    ["extractRecentPosts", 'article[data-urn^="urn:li:activity:"]'],
-    ["extractActivityPost", "data-urn"],
-  ]);
-  assert.deepEqual(result, {
-    recentPosts: {
-      postCount: 1,
-      posts: [
-        {
-          activityUrn: "urn:li:activity:1",
-          type: "unknown",
-          content: { text: null },
-        },
-      ],
-    },
-    signals: {
-      totalPosts: 1,
-      hasPosts: true,
-      validPosts: 1,
-    },
   });
-});
-
-test("buildActivityIntelligence returns the committed object shape", () => {
-  const html = loadSnapshot();
-  const root = createRecentPostsRoot(html);
-
-  const result = buildActivityIntelligence(root);
 
   assert.deepEqual(Object.keys(result), ["recentPosts", "signals"]);
   assert.deepEqual(Object.keys(result.recentPosts), ["postCount", "posts"]);
@@ -101,42 +56,31 @@ test("buildActivityIntelligence returns the committed object shape", () => {
     "hasPosts",
     "validPosts",
   ]);
-  assert.deepEqual(result, {
-    recentPosts: {
-      postCount: 5,
-      posts: [
-        {
-          activityUrn: "urn:li:activity:7487759344000794624",
-          type: "unknown",
-          content: { text: null },
-        },
-        {
-          activityUrn: "urn:li:activity:7485347500183441408",
-          type: "unknown",
-          content: { text: null },
-        },
-        {
-          activityUrn: "urn:li:activity:7485347481082404864",
-          type: "unknown",
-          content: { text: null },
-        },
-        {
-          activityUrn: "urn:li:activity:7483058417943883776",
-          type: "unknown",
-          content: { text: null },
-        },
-        {
-          activityUrn: "urn:li:activity:7482688747671588864",
-          type: "unknown",
-          content: { text: null },
-        },
-      ],
-    },
-    signals: {
-      totalPosts: 5,
-      hasPosts: true,
-      validPosts: 5,
-    },
+
+  assert.equal(result.recentPosts.postCount, 0);
+  assert.deepEqual(result.recentPosts.posts, []);
+
+  assert.deepEqual(result.signals, {
+    totalPosts: 0,
+    hasPosts: false,
+    validPosts: 0,
+  });
+});
+
+test("buildActivityIntelligence returns normalized activity intelligence", () => {
+  const html = loadSnapshot();
+  const root = createRecentPostsRoot(html);
+
+  const result = buildActivityIntelligence(root);
+
+  assert.deepEqual(Object.keys(result), ["recentPosts", "signals"]);
+  assert.equal(result.recentPosts.postCount, 5);
+  assert.equal(result.recentPosts.posts.length, 5);
+
+  assert.deepEqual(result.signals, {
+    totalPosts: 5,
+    hasPosts: true,
+    validPosts: 5,
   });
 });
 

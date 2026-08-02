@@ -59,58 +59,44 @@ test("extractRecentPosts delegates to extractActivityPost for each article", () 
   );
 });
 
-test("extractRecentPosts follows the committed snapshot contract", () => {
+test("extractRecentPosts returns normalized activity posts", () => {
   const html = loadSnapshot();
   const root = createRecentPostsRoot(html);
 
-  const result = extractRecentPosts(root);
+  const result = extractRecentPosts(root, (item) => ({
+    success: true,
+    root: item,
+    urn: item.getAttribute("data-urn"),
+    type: "text",
+    author: null,
+    authorProfileUrl: null,
+    text: null,
+    images: [],
+    video: null,
+    document: null,
+  }));
 
   assert.deepEqual(Object.keys(result), ["postCount", "posts"]);
-  assert.equal(result.postCount, result.posts.length);
-  assert.ok(Array.isArray(result.posts));
+  assert.equal(result.postCount, 5);
+  assert.equal(result.posts.length, 5);
 
   for (const post of result.posts) {
-    assert.deepEqual(Object.keys(post), ["activityUrn", "type", "content"]);
-    assert.ok(
-      post.activityUrn === null ||
-        (typeof post.activityUrn === "string" &&
-          post.activityUrn.startsWith("urn:li:activity:"))
-    );
-    assert.equal(post.type, "unknown");
-    assert.deepEqual(Object.keys(post.content), ["text"]);
-    assert.ok(
-      post.content.text === null || typeof post.content.text === "string"
-    );
-  }
+    assert.deepEqual(Object.keys(post), [
+      "success",
+      "root",
+      "urn",
+      "type",
+      "author",
+      "authorProfileUrl",
+      "text",
+      "images",
+      "video",
+      "document",
+    ]);
 
-  assert.deepEqual(result, {
-    postCount: 5,
-    posts: [
-      {
-        activityUrn: "urn:li:activity:7487759344000794624",
-        type: "unknown",
-        content: { text: null },
-      },
-      {
-        activityUrn: "urn:li:activity:7485347500183441408",
-        type: "unknown",
-        content: { text: null },
-      },
-      {
-        activityUrn: "urn:li:activity:7485347481082404864",
-        type: "unknown",
-        content: { text: null },
-      },
-      {
-        activityUrn: "urn:li:activity:7483058417943883776",
-        type: "unknown",
-        content: { text: null },
-      },
-      {
-        activityUrn: "urn:li:activity:7482688747671588864",
-        type: "unknown",
-        content: { text: null },
-      },
-    ],
-  });
+    assert.equal(post.success, true);
+    assert.ok(post.urn.startsWith("urn:li:activity:"));
+    assert.equal(post.type, "text");
+    assert.deepEqual(post.images, []);
+  }
 });
