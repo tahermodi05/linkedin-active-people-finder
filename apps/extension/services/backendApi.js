@@ -17,3 +17,21 @@ export async function getNextProfileForVerification() {
 
   return result.data;
 }
+
+export async function completeCurrentVerification(body) {
+  const response = await apiRequest("/api/search/complete", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.message || "Failed to complete verification");
+  }
+
+  return result.data;
+}

@@ -71,6 +71,30 @@ function getDocument(article) {
   };
 }
 
+function getEngagement(article) {
+  function parseCount(selector) {
+    const element = article?.querySelector?.(selector);
+
+    if (!element) {
+      return null;
+    }
+
+    const match = element.textContent.match(/\d[\d,]*/);
+
+    if (!match) {
+      return null;
+    }
+
+    return Number(match[0].replace(/,/g, ""));
+  }
+
+  return {
+    reactions: parseCount(".social-details-social-counts__reactions-count"),
+    comments: parseCount(".social-details-social-counts__comments"),
+    reposts: parseCount(".social-details-social-counts__reposts"),
+  };
+}
+
 function getActivityType(article) {
   if (getDocument(article)) {
     return "document";
@@ -144,6 +168,7 @@ export function extractActivityPost(root) {
     authorProfileUrl: author.authorProfileUrl,
     text: getPostText(article),
     images: getImages(article),
+    engagement: getEngagement(article),
     video: getVideo(article),
     document: getDocument(article),
   };

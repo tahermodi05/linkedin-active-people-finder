@@ -84,3 +84,31 @@ test("extracts document activity from a normalized article DOM", () => {
   assert.equal(result.document?.title, "Document title");
   assert.equal(result.document?.src, "https://example.com/document");
 });
+
+test("extracts engagement signals from normalized article DOM", () => {
+  const html = `
+    <article data-urn="urn:li:activity:123">
+      <span class="social-details-social-counts__reactions-count">
+        120
+      </span>
+
+      <span class="social-details-social-counts__comments">
+        15 comments
+      </span>
+
+      <span class="social-details-social-counts__reposts">
+        4 reposts
+      </span>
+    </article>
+  `;
+
+  const dom = new JSDOM(html);
+
+  const result = extractActivityPost(dom.window.document);
+
+  assert.deepEqual(result.engagement, {
+    reactions: 120,
+    comments: 15,
+    reposts: 4,
+  });
+});

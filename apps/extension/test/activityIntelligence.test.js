@@ -5,6 +5,7 @@ import { test } from "node:test";
 import { buildActivityIntelligence } from "../intelligence/activityIntelligence.js";
 import { extractRecentPosts } from "../extractors/recentPosts.js";
 import { buildActivitySignals } from "../signals/activitySignals.js";
+import { analyzeActivities } from "../intelligence/activityAnalyzer.js";
 
 const SNAPSHOT_PATH = new URL(
   "../../../docs/html-snapshots/activity-page.html",
@@ -49,21 +50,31 @@ test("buildActivityIntelligence returns empty intelligence when no posts exist",
     },
   });
 
-  assert.deepEqual(Object.keys(result), ["recentPosts", "signals"]);
-  assert.deepEqual(Object.keys(result.recentPosts), ["postCount", "posts"]);
-  assert.deepEqual(Object.keys(result.signals), [
-    "totalPosts",
-    "hasPosts",
-    "validPosts",
+  assert.deepEqual(Object.keys(result), [
+    "recentPosts",
+    "signals",
+    "analysis",
   ]);
 
-  assert.equal(result.recentPosts.postCount, 0);
-  assert.deepEqual(result.recentPosts.posts, []);
+  assert.deepEqual(result.recentPosts, {
+    postCount: 0,
+    posts: [],
+  });
 
   assert.deepEqual(result.signals, {
     totalPosts: 0,
     hasPosts: false,
     validPosts: 0,
+  });
+
+  assert.deepEqual(result.analysis, {
+    totalPosts: 0,
+    mediaBreakdown: {
+      text: 0,
+      image: 0,
+      video: 0,
+      document: 0,
+    },
   });
 });
 
@@ -73,7 +84,12 @@ test("buildActivityIntelligence returns normalized activity intelligence", () =>
 
   const result = buildActivityIntelligence(root);
 
-  assert.deepEqual(Object.keys(result), ["recentPosts", "signals"]);
+  assert.deepEqual(Object.keys(result), [
+    "recentPosts",
+    "signals",
+    "analysis",
+  ]);
+
   assert.equal(result.recentPosts.postCount, 5);
   assert.equal(result.recentPosts.posts.length, 5);
 
@@ -82,6 +98,8 @@ test("buildActivityIntelligence returns normalized activity intelligence", () =>
     hasPosts: true,
     validPosts: 5,
   });
+
+  assert.deepEqual(result.analysis, analyzeActivities(result.recentPosts.posts));
 });
 
 test("buildActivityIntelligence is deterministic", () => {
@@ -94,4 +112,8 @@ test("buildActivityIntelligence is deterministic", () => {
   assert.deepEqual(first, second);
   assert.deepEqual(first.recentPosts, extractRecentPosts(root));
   assert.deepEqual(first.signals, buildActivitySignals(first.recentPosts));
+  assert.deepEqual(
+    first.analysis,
+    analyzeActivities(first.recentPosts.posts)
+  );
 });

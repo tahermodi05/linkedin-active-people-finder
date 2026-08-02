@@ -1,4 +1,7 @@
-import { getNextProfileForVerification } from "../services/backendApi.js";
+import {
+  completeCurrentVerification,
+  getNextProfileForVerification,
+} from "../services/backendApi.js";
 import { MESSAGE_TYPES } from "../shared/messageTypes.js";
 
 export async function startVerificationWorker() {
@@ -68,22 +71,35 @@ function waitForVerificationResult(tabId) {
 export async function startVerificationLifecycle() {
   console.log("Starting verification lifecycle...");
 
-  const profile = await requestNextProfile();
+  while (true) {
+    const profile = await requestNextProfile();
 
-  const tab = await openVerificationTab(profile);
+    if (!profile) {
+      break;
+    }
 
-  await waitForProfileReady(tab.id);
+    const tab = await openVerificationTab(profile);
 
-  console.log("Profile page ready");
+    await waitForProfileReady(tab.id);
 
-  // Start listening BEFORE sending the verification request.
-  const verificationPromise = waitForVerificationResult(tab.id);
+    console.log("Profile page ready");
 
-  await requestProfileVerification(tab.id, profile.profileUrl);
+    // Start listening BEFORE sending the verification request.
+    const verificationPromise = waitForVerificationResult(tab.id);
 
-  console.log("Verification requested");
+    await requestProfileVerification(tab.id, profile.profileUrl);
 
-  const verificationResult = await verificationPromise;
+    console.log("Verification requested");
 
-  console.log("Verification completed", verificationResult);
+    const verificationResult = await verificationPromise;
+
+    console.log("Verification completed", verificationResult);
+
+    await completeCurrentVerification({
+      verificationStatus: "completed",
+      currentlyWorksHere: false,
+    });
+
+    await chrome.tabs.remove(tab.id);
+  }
 }
