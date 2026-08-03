@@ -21,8 +21,8 @@ function normalizeProfileUrl(href) {
   }
 }
 
-function getCompanyPeopleCards() {
-  return document.querySelectorAll(
+function getCompanyPeopleCards(root = document) {
+  return root.querySelectorAll(
     ".org-people-profile-card__profile-card-spacing"
   );
 }
@@ -76,7 +76,13 @@ function getAllProfileLinks(root = document) {
 
 function extractProfileFromCard(card) {
   const profileUrl = getProfileLink(card);
-  const name = getText(card.querySelector("a[href*='/in/']"));
+
+  const profileLinks = [...card.querySelectorAll("a[href*='/in/']")];
+
+  const profileLink =
+    profileLinks.find((link) => getText(link)) || profileLinks[0] || null;
+
+  const name = getText(profileLink);
 
   if (!profileUrl || !name) {
     return null;
