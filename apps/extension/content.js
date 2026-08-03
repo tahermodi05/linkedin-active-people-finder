@@ -19,9 +19,6 @@ const SELECTORS = {
   loadMoreButton: ".scaffold-finite-scroll__load-button",
 };
 
-const profileHeaderExtractor = import(
-  chrome.runtime.getURL("extractors/profileHeaderV2.js")
-);
 const activityIntelligenceModule = import(
   chrome.runtime.getURL("intelligence/activityIntelligence.js")
 );
@@ -149,10 +146,6 @@ function normalizeProfileUrl(href) {
   } catch {
     return null;
   }
-}
-
-function extractProfileFromCard(card) {
-  return null;
 }
 
 async function extractVisibleProfiles() {
@@ -347,9 +340,9 @@ function registerMessageListener() {
     }
 
     if (message?.type === MESSAGE_TYPES.VERIFY_PROFILE) {
-      profileHeaderExtractor.then(({ extractProfileHeader }) => {
+      profileExtractorModule.then(({ extractProfileData }) => {
         try {
-          const extractedProfile = extractProfileHeader(document);
+          const extractedProfile = extractProfileData(document);
 
           const profileUrl = message.payload.profileUrl;
 
