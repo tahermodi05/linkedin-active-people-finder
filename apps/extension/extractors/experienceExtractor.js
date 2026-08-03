@@ -196,6 +196,33 @@ function extractExperienceCards(section) {
   return results;
 }
 
+function extractCompanyBlock(card) {
+  return card;
+}
+
+function extractPosition(card) {
+  const texts = pickMeaningfulTexts(card);
+  const dateText = texts.find(isDateRangeText) || getText(card);
+  const parsedDates = parseExperienceDates(dateText);
+  const role = extractRole(card, texts);
+  const company = extractCompany(card, texts);
+
+  return {
+    company,
+    role,
+    startDate: parsedDates.startDate,
+    endDate: parsedDates.endDate,
+    duration: parsedDates.duration,
+    current: parsedDates.current,
+  };
+}
+
+function extractPositionsWithinCompany(companyBlock) {
+  const positionCards = extractExperienceCards(companyBlock);
+
+  return positionCards.map((card) => extractPosition(card));
+}
+
 export function extractExperience(root) {
   const section = locateExperienceSection(root);
 
@@ -209,25 +236,8 @@ export function extractExperience(root) {
     };
   }
 
-  const cards = extractExperienceCards(section);
-  const experience = [];
-
-  for (const card of cards) {
-    const texts = pickMeaningfulTexts(card);
-    const dateText = texts.find(isDateRangeText) || getText(card);
-    const parsedDates = parseExperienceDates(dateText);
-    const role = extractRole(card, texts);
-    const company = extractCompany(card, texts);
-
-    experience.push({
-      company,
-      role,
-      startDate: parsedDates.startDate,
-      endDate: parsedDates.endDate,
-      duration: parsedDates.duration,
-      current: parsedDates.current,
-    });
-  }
+  const companyBlock = extractCompanyBlock(section);
+  const experience = extractPositionsWithinCompany(companyBlock);
 
   const currentExperience =
     experience.find((item) => item.current && item.company && item.role) ||
