@@ -23,7 +23,7 @@ const SELECTORS = {
 };
 
 const profileHeaderExtractor = import(
-  chrome.runtime.getURL("extractors/profileHeader.js")
+  chrome.runtime.getURL("extractors/profileHeaderV2.js")
 );
 const activityIntelligenceModule = import(
   chrome.runtime.getURL("intelligence/activityIntelligence.js")
@@ -408,10 +408,10 @@ function registerMessageListener() {
             type: MESSAGE_TYPES.PROFILE_VERIFIED,
             payload: {
               profileUrl,
-              name: extractedProfile.name,
+              name: extractedProfile.fullName,
               verified: true,
               headline: extractedProfile.headline,
-              company: extractedProfile.company,
+              company: extractedProfile.currentCompany,
               location: extractedProfile.location,
               followers: extractedProfile.followers,
               connections: extractedProfile.connections,
@@ -455,3 +455,10 @@ function registerMessageListener() {
 registerMessageListener();
 notifyProfilePageReady();
 notifyActivityPageReady();
+
+profileHeaderExtractor.then(({ extractProfileHeader }) => {
+  if (window.location.pathname.match(/^\/in\/[^/]+\/?$/)) {
+    console.log("===== MANUAL PROFILE DEBUG =====");
+    console.log(extractProfileHeader(document));
+  }
+});
