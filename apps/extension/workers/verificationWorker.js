@@ -175,22 +175,58 @@ export async function startVerificationLifecycle() {
 
     console.log("Opened verification tab", tab.id, profile.profileUrl);
 
-    await waitForProfileReady(tab.id);
-
-    console.log("Profile ready received");
-
-    console.log("Profile page ready");
-
-    // Start listening BEFORE sending the verification request.
     const verificationPromise = waitForVerificationResult(tab.id);
 
-    console.log("Sending VERIFY_PROFILE");
+    console.log(
+      "[Verification]",
+      tab.id,
+      profile.profileUrl,
+      "Waiting for PROFILE_PAGE_READY"
+    );
+    await waitForProfileReady(tab.id);
+    console.log(
+      "[Verification]",
+      tab.id,
+      profile.profileUrl,
+      "PROFILE_PAGE_READY received"
+    );
 
+    console.log(
+      "[Verification]",
+      tab.id,
+      profile.profileUrl,
+      "Waiting for PROFILE_VERIFIED"
+    );
+    console.log("Sending VERIFY_PROFILE");
+    console.log(
+      "[Verification]",
+      tab.id,
+      profile.profileUrl,
+      "Calling requestProfileVerification()"
+    );
     await requestProfileVerification(tab.id, profile.profileUrl);
+    console.log(
+      "[Verification]",
+      tab.id,
+      profile.profileUrl,
+      "requestProfileVerification() completed"
+    );
 
     console.log("VERIFY_PROFILE sent");
 
+    console.log(
+      "[Verification]",
+      tab.id,
+      profile.profileUrl,
+      "Waiting for PROFILE_VERIFIED"
+    );
     const verificationResult = await verificationPromise;
+    console.log(
+      "[Verification]",
+      tab.id,
+      profile.profileUrl,
+      "PROFILE_VERIFIED received"
+    );
 
     console.log("Verification completed", verificationResult);
 
@@ -198,11 +234,35 @@ export async function startVerificationLifecycle() {
 
     const activityReadyPromise = waitForActivityPageReady(tab.id);
 
+    console.log(
+      "[Verification]",
+      tab.id,
+      profile.profileUrl,
+      "Calling chrome.tabs.update() for activity page"
+    );
     await chrome.tabs.update(tab.id, {
       url: activityUrl,
     });
+    console.log(
+      "[Verification]",
+      tab.id,
+      profile.profileUrl,
+      "chrome.tabs.update() completed"
+    );
 
+    console.log(
+      "[Verification]",
+      tab.id,
+      profile.profileUrl,
+      "Waiting for ACTIVITY_PAGE_READY"
+    );
     await activityReadyPromise;
+    console.log(
+      "[Verification]",
+      tab.id,
+      profile.profileUrl,
+      "ACTIVITY_PAGE_READY received"
+    );
 
     console.log("Activity page ready");
 
@@ -210,19 +270,55 @@ export async function startVerificationLifecycle() {
       tab.id
     );
 
+    console.log(
+      "[Verification]",
+      tab.id,
+      profile.profileUrl,
+      "Calling requestActivityIntelligence()"
+    );
     await requestActivityIntelligence(tab.id);
+    console.log(
+      "[Verification]",
+      tab.id,
+      profile.profileUrl,
+      "requestActivityIntelligence() completed"
+    );
 
     console.log("Activity extraction requested");
 
+    console.log(
+      "[Verification]",
+      tab.id,
+      profile.profileUrl,
+      "Waiting for ACTIVITY_INTELLIGENCE_EXTRACTED"
+    );
     currentActivityIntelligence = await activityIntelligencePromise;
+    console.log(
+      "[Verification]",
+      tab.id,
+      profile.profileUrl,
+      "ACTIVITY_INTELLIGENCE_EXTRACTED received"
+    );
 
     console.log("Activity intelligence extracted", currentActivityIntelligence);
 
+    console.log(
+      "[Verification]",
+      tab.id,
+      profile.profileUrl,
+      "Calling completeCurrentVerification()"
+    );
     await completeCurrentVerification({
       verificationStatus: "completed",
       currentlyWorksHere: determineCurrentlyWorksHere(verificationResult),
       activityIntelligence: currentActivityIntelligence,
     });
+    console.log(
+      "[Verification]",
+      tab.id,
+      profile.profileUrl,
+      "completeCurrentVerification() completed"
+    );
 
     console.log("Verification lifecycle completed");
   }

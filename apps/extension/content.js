@@ -1,3 +1,5 @@
+
+
 const MESSAGE_TYPES = {
   START_SCAN: "START_SCAN",
   DETECT_PAGE: "DETECT_PAGE",
@@ -12,13 +14,8 @@ const MESSAGE_TYPES = {
 };
 
 const SELECTORS = {
-  employeeCard: ".org-people-profile-card__profile-card-spacing",
-  profileLink: ".artdeco-entity-lockup__title a[href*='/in/']",
-  name: ".artdeco-entity-lockup__title .lt-line-clamp",
-  headline: ".artdeco-entity-lockup__subtitle .lt-line-clamp",
-  connectionDegree: ".artdeco-entity-lockup__degree",
-  mutualConnections:
-    ".org-people-profile-card__profile-info > .text-align-center > .lt-line-clamp",
+  profileLink:
+    "a[href*='/in/']",
   loadMoreButton: ".scaffold-finite-scroll__load-button",
 };
 
@@ -29,79 +26,19 @@ const activityIntelligenceModule = import(
   chrome.runtime.getURL("intelligence/activityIntelligence.js")
 );
 
-function getText(element) {
-  return element?.textContent?.replace(/\s+/g, " ").trim() || null;
-}
+const searchScannerModule = import(
+  chrome.runtime.getURL("scanners/searchScanner.js")
+);
 
-function normalizeProfileUrl(href) {
-  if (!href) return null;
+const profileExtractorModule = import(
+  chrome.runtime.getURL("extractors/profileExtractor.js")
+);
 
-  try {
-    const url = new URL(href, window.location.origin);
+console.log("content.js loaded", window.location.href);
 
-    if (!url.pathname.startsWith("/in/")) {
-      return null;
-    }
-
-    url.search = "";
-    url.hash = "";
-
-    return `https://www.linkedin.com${url.pathname.replace(/\/$/, "")}/`;
-  } catch {
-    return null;
-  }
-}
-
-function getConnectionDegree(card) {
-  const degree = getText(card.querySelector(SELECTORS.connectionDegree));
-
-  return degree?.replace(/^·\s*/, "") || null;
-}
-
-function getProfileLink(card) {
-  const links = card.querySelectorAll(SELECTORS.profileLink);
-
-  for (const link of links) {
-    const href = link.getAttribute("href") || "";
-
-    if (!href.includes("/in/")) continue;
-
-    const url = normalizeProfileUrl(link.href);
-
-    if (url) {
-      return url;
-    }
-  }
-
-  return null;
-}
-
-function getMutualConnections(card) {
-  const elements = card.querySelectorAll(SELECTORS.mutualConnections);
-
-  for (const element of elements) {
-    const text = getText(element);
-
-    if (
-      text &&
-      /(mutual connection|mutual connections|connection)/i.test(text)
-    ) {
-      return text;
-    }
-  }
-
-  return null;
-}
-
-function isVisible(element) {
-  if (!element) return false;
-
-  const style = window.getComputedStyle(element);
-
-  return (
-    style.display !== "none" &&
-    style.visibility !== "hidden" &&
-    element.getClientRects().length > 0
+function getCompanyPeopleCards() {
+  return document.querySelectorAll(
+    ".org-people-profile-card__profile-card-spacing"
   );
 }
 
@@ -118,9 +55,10 @@ async function waitForEmployeeGrowth(previousCount) {
   const start = Date.now();
 
   while (Date.now() - start < timeout) {
-    const currentCount = document.querySelectorAll(
-      SELECTORS.employeeCard
-    ).length;
+    const currentCount =
+      detectPage() === "search"
+        ? document.querySelectorAll("a[href*='/in/']").length
+        : getCompanyPeopleCards().length;
 
     if (currentCount > previousCount) {
       console.log(
@@ -159,9 +97,10 @@ async function loadAllEmployees() {
       break;
     }
 
-    const previousCount = document.querySelectorAll(
-      SELECTORS.employeeCard
-    ).length;
+    const previousCount =
+      detectPage() === "search"
+        ? document.querySelectorAll("a[href*='/in/']").length
+        : getCompanyPeopleCards().length;
 
     console.log(
       `Loading batch ${loadClicks + 1}... (${previousCount} employees loaded)`
@@ -191,49 +130,39 @@ function getLoadMoreButton() {
   return button;
 }
 
-function extractProfileFromCard(card) {
-  const profileUrl = getProfileLink(card);
-  const name = getText(card.querySelector(SELECTORS.name));
-
-  if (!profileUrl || !name) {
+function normalizeProfileUrl(href) {
+  if (!href) {
     return null;
   }
 
-  return {
-    name,
-    profileUrl,
-    headline: getText(card.querySelector(SELECTORS.headline)),
-    connectionDegree: getConnectionDegree(card),
-    mutualConnections: getMutualConnections(card),
-  };
+  try {
+    const url = new URL(href, window.location.origin);
+
+    if (!url.pathname.startsWith("/in/")) {
+      return null;
+    }
+
+    url.search = "";
+    url.hash = "";
+
+    return `https://www.linkedin.com${url.pathname.replace(/\/$/, "")}/`;
+  } catch {
+    return null;
+  }
 }
 
-function extractVisibleProfiles() {
-  const profiles = [];
-  const seenProfileUrls = new Set();
+function extractProfileFromCard(card) {
+  return null;
+}
 
-  const employeeCards = document.querySelectorAll(SELECTORS.employeeCard);
+async function extractVisibleProfiles() {
+  const searchScanner = await searchScannerModule;
 
-  for (const card of employeeCards) {
-    if (!isVisible(card)) {
-      continue;
-    }
-
-    const profile = extractProfileFromCard(card);
-
-    if (!profile) {
-      continue;
-    }
-
-    if (seenProfileUrls.has(profile.profileUrl)) {
-      continue;
-    }
-
-    seenProfileUrls.add(profile.profileUrl);
-    profiles.push(profile);
+  if (detectPage() === "search") {
+    return searchScanner.extractVisibleProfiles(document);
   }
-  
-  return profiles;
+
+  return searchScanner.extractCompanyPeopleProfiles(document);
 }
 
 function detectPage() {
@@ -267,29 +196,53 @@ function detectPage() {
 }
 
 async function handleScanRequest() {
-  await loadAllEmployees();
+  try {
+    await loadAllEmployees();
 
-  return {
-    success: true,
-    profiles: extractVisibleProfiles(),
-  };
+    const { extractVisibleProfiles, extractCompanyPeopleProfiles } =
+      await searchScannerModule;
+
+    const profiles =
+      detectPage() === "search"
+        ? extractVisibleProfiles(document)
+        : extractCompanyPeopleProfiles(document);
+
+    return {
+      success: true,
+      profiles,
+    };
+  } catch (error) {
+    console.error("handleScanRequest failed:", error);
+
+    return {
+      success: false,
+      message: error.message,
+    };
+  }
 }
 
 function notifyProfilePageReady() {
-  if (detectPage() !== "profile") {
+  console.log("notifyProfilePageReady() entered");
+  const pageType = detectPage();
+  console.log("after detectPage()", pageType);
+
+  if (pageType !== "profile") {
     return;
   }
 
+  console.log("before normalizeProfileUrl()");
   const profileUrl = normalizeProfileUrl(window.location.href);
 
   if (!profileUrl) {
     return;
   }
 
+  console.log("before chrome.runtime.sendMessage()");
   chrome.runtime.sendMessage({
     type: MESSAGE_TYPES.PROFILE_PAGE_READY,
     profileUrl,
   });
+  console.log("after chrome.runtime.sendMessage()");
 }
 
 function notifyActivityPageReady() {
@@ -396,11 +349,7 @@ function registerMessageListener() {
     if (message?.type === MESSAGE_TYPES.VERIFY_PROFILE) {
       profileHeaderExtractor.then(({ extractProfileHeader }) => {
         try {
-          console.log("Verification request received");
-          console.log("Running profile extraction");
-
           const extractedProfile = extractProfileHeader(document);
-          console.log("Extraction finished", extractedProfile);
 
           const profileUrl = message.payload.profileUrl;
 
@@ -413,13 +362,12 @@ function registerMessageListener() {
               headline: extractedProfile.headline,
               company: extractedProfile.currentCompany,
               location: extractedProfile.location,
-              followers: extractedProfile.followers,
-              connections: extractedProfile.connections,
-              mutualConnections: extractedProfile.mutualConnections,
+              currentRole: extractedProfile.currentRole,
+              currentlyWorking: extractedProfile.currentlyWorking,
+              employmentConfidence: extractedProfile.employmentConfidence,
+              experience: extractedProfile.experience,
             },
           });
-
-          console.log("PROFILE_VERIFIED sent");
         } catch (error) {
           console.error("Profile verification failed:", error);
         }
@@ -428,21 +376,19 @@ function registerMessageListener() {
       return false;
     }
     if (message?.type === MESSAGE_TYPES.EXTRACT_ACTIVITY_INTELLIGENCE) {
-      console.log("Activity extraction request received");
-
       waitForActivityPosts().then(() => {
         activityIntelligenceModule.then(({ buildActivityIntelligence }) => {
-        const intelligence = buildActivityIntelligence(document);
-        const payload = serializeActivityIntelligence(intelligence);
+          const intelligence = buildActivityIntelligence(document);
+          const payload = serializeActivityIntelligence(intelligence);
 
-        chrome.runtime.sendMessage({
-          type: MESSAGE_TYPES.ACTIVITY_INTELLIGENCE_EXTRACTED,
-          payload,
-        });
+          chrome.runtime.sendMessage({
+            type: MESSAGE_TYPES.ACTIVITY_INTELLIGENCE_EXTRACTED,
+            payload,
+          });
 
-        sendResponse({
-          success: true,
-        });
+          sendResponse({
+            success: true,
+          });
         });
       });
       return true;
@@ -453,12 +399,6 @@ function registerMessageListener() {
 }
 
 registerMessageListener();
+console.log("before notifyProfilePageReady()");
 notifyProfilePageReady();
 notifyActivityPageReady();
-
-profileHeaderExtractor.then(({ extractProfileHeader }) => {
-  if (window.location.pathname.match(/^\/in\/[^/]+\/?$/)) {
-    console.log("===== MANUAL PROFILE DEBUG =====");
-    console.log(extractProfileHeader(document));
-  }
-});

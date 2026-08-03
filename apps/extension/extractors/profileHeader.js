@@ -96,9 +96,6 @@ function extractLocation(root) {
 function extractCurrentCompany(root) {
   const texts = getLeafTexts(root);
 
-  console.log("===== LEAF TEXTS =====");
-  console.table(texts);
-
   const ignored = new Set([
     extractFullName(root),
     extractHeadline(root),
@@ -118,18 +115,11 @@ function extractCurrentCompany(root) {
 }
 
 export function extractProfileHeader(root) {
-  const result = {
+  return {
     profileUrl: extractProfileUrl(root),
     fullName: extractFullName(root),
     headline: extractHeadline(root),
     location: extractLocation(root),
     currentCompany: extractCurrentCompany(root),
   };
-
-  console.log("===== PROFILE HEADER =====");
-  console.log(result);
-
-  console.log(root.querySelector("main")?.outerHTML);
-  
-  return result;
 }

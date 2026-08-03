@@ -60,6 +60,9 @@ async function handleStartScan(sendResponse) {
 
     const profiles = scanResponse.profiles ?? [];
 
+    console.log("Profiles being sent:", profiles);
+    console.table(profiles);
+
     const backendResponse = await apiRequest("/api/search", {
       method: "POST",
       headers: {

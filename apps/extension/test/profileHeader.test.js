@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
-import { extractProfileHeader } from "../extractors/profileHeader.js";
+import { extractProfileHeader } from "../extractors/profileHeaderV2.js";
 
 const SNAPSHOT_PATH = new URL(
   "../../../docs/html-snapshots/profile-page.html",
@@ -44,21 +44,13 @@ function createProfileHeaderRoot(html) {
 
   const topCard = {
     querySelector(selector) {
-      if (selector === "h2") {
+      if (selector === "h1, h2") {
         return createTextNode(fullName);
       }
 
       return null;
     },
     querySelectorAll(selector) {
-      if (selector === 'a[href="#"]') {
-        return [];
-      }
-
-      if (selector === 'a[target="_blank"]') {
-        return [];
-      }
-
       return [];
     },
   };
@@ -99,10 +91,18 @@ test("extractProfileHeader follows the committed snapshot contract", () => {
     "headline",
     "location",
     "currentCompany",
+    "currentRole",
+    "currentlyWorking",
+    "employmentConfidence",
+    "experience",
   ]);
   assert.equal(result.profileUrl, "https://www.linkedin.com/in/sujal-jajal-63744024a/");
   assert.equal(result.fullName, "Sujal Jajal");
   assert.equal(result.headline, null);
   assert.equal(result.location, null);
   assert.equal(result.currentCompany, null);
+  assert.equal(result.currentRole, null);
+  assert.equal(result.currentlyWorking, false);
+  assert.equal(result.employmentConfidence, "LOW");
+  assert.deepEqual(result.experience, []);
 });

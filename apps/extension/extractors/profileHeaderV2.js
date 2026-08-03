@@ -1,3 +1,5 @@
+import { extractExperience } from "./experienceExtractor.js";
+
 function getText(element) {
   return element?.textContent?.replace(/\s+/g, " ").trim() || null;
 }
@@ -86,52 +88,18 @@ function extractLocation(root) {
   );
 }
 
-function extractCurrentCompany(root) {
-  const topCard = getTopCard(root);
-
-  const text = topCard?.textContent || "";
-
-  const headline = extractHeadline(root);
-
-  const lines = text
-    .split(/\n+/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-
-  for (const line of lines) {
-    if (
-      line === headline ||
-      line.includes("followers") ||
-      line.includes("connections") ||
-      line.startsWith("·") ||
-      line.length < 2
-    ) {
-      continue;
-    }
-
-    if (
-      line.includes(" at ") ||
-      line.includes(" @ ") ||
-      line.includes("LLP") ||
-      line.includes("Ltd") ||
-      line.includes("Inc") ||
-      line.includes("Technologies") ||
-      line.includes("Solutions") ||
-      line.includes("Private Limited")
-    ) {
-      return line;
-    }
-  }
-
-  return null;
-}
-
 export function extractProfileHeader(root) {
+  const experience = extractExperience(root);
+
   return {
     profileUrl: extractProfileUrl(root),
     fullName: extractFullName(root),
     headline: extractHeadline(root),
     location: extractLocation(root),
-    currentCompany: extractCurrentCompany(root),
+    currentCompany: experience.currentCompany,
+    currentRole: experience.currentRole,
+    currentlyWorking: experience.currentlyWorking,
+    employmentConfidence: experience.employmentConfidence,
+    experience: experience.experience,
   };
 }
