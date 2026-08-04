@@ -79,3 +79,26 @@ Fields:
 - verified_at
 - activity_intelligence
 - verification_confidence
+
+## PostgreSQL Repository Implementation Status
+
+Current progress:
+
+- Database client configured
+- Database schema drafted
+- Query layer created
+- Repository selector added
+- `createScanSession` PostgreSQL operation implemented
+
+Not implemented yet:
+
+- Profile inserts
+- Scan retrieval
+- Dashboard queries
+- Verification updates
+- Full PostgreSQL persistence switch
+
+The application continues using the memory repository by default.
+
+- `createScanProfile` PostgreSQL operation prepared
+- `getScanSession` PostgreSQL operation prepared
