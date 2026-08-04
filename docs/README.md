@@ -20,8 +20,8 @@ The backend is organized as a thin layered API:
 
 - Controllers handle HTTP request/response flow and delegate to services.
 - Services contain the search and dashboard workflow logic.
-- The Scan Store API owns in-memory scan-session state and exposes summary/list/detail access.
-- The dashboard module reuses the same scan-session store rather than introducing a separate persistence layer.
+- The Repository layer owns scan-session persistence and exposes summary/list/detail access.
+- The dashboard module reuses the repository layer rather than introducing a separate persistence layer.
 
 ### Current backend flow
 
@@ -40,12 +40,15 @@ Express API
  └─────────────────┘
         │
         ▼
-Scan Store API
+Repository
+        │
+ ┌─────────────────┐
+ │ In-Memory Store │
+ │ (current)       │
+ └─────────────────┘
         │
         ▼
-In-Memory Store
-        │
-(Future PostgreSQL)
+PostgreSQL (future)
 ```
 
 ### Current API surface
