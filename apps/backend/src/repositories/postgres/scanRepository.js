@@ -36,4 +36,4 @@ class PostgresScanRepository {
   }
 }
 
-module.exports = new PostgresScanRepository();
+export default new PostgresScanRepository();
