@@ -102,3 +102,37 @@ The application continues using the memory repository by default.
 
 - `createScanProfile` PostgreSQL operation prepared
 - `getScanSession` PostgreSQL operation prepared
+
+## Repository Migration Completion
+
+The PostgreSQL scan repository migration is now implemented for the core scan-session workflow.
+
+Implemented PostgreSQL scan repository methods:
+
+- `createScanSession`
+- `getScanSession`
+- `getLatestScan`
+- `setLatestScan`
+- `getNextPendingProfile`
+- `getAllScanSessions`
+- `getDashboardSummary`
+- `updateCurrentProfileVerification`
+- `markCurrentProfileProcessed`
+
+The repository remains behind the existing repository abstraction.
+Existing services and controllers were not changed.
+
+## Contract Alignment
+
+PostgreSQL rows are mapped into the application contract used by the in-memory store.
+Field naming is aligned with the existing store behavior.
+Profile and session responses preserve the expected application shapes.
+Pending profile processing behavior was aligned with the existing store behavior.
+
+## Testing Status
+
+Backend startup was verified.
+API health response was verified.
+JavaScript syntax checks were performed.
+The existing test suite passed: 29 tests passed.
+Real PostgreSQL database execution testing is pending because PostgreSQL is not currently installed locally.
