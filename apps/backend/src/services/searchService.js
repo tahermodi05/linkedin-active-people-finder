@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 
+import { AppError } from "../errors/AppError.js";
 import {
   createScanSession,
   getLatestScan as getLatestScanFromStore,
@@ -19,6 +20,10 @@ function normalizeProfiles(profiles) {
 }
 
 export async function searchPeople(data) {
+  if (!data || !Array.isArray(data.profiles) || data.profiles.length === 0) {
+    throw new AppError("At least one profile is required", 400);
+  }
+
   const profiles = normalizeProfiles(data.profiles);
   const scanId = randomUUID();
   const createdSession = await createScanSession(scanId, profiles);
@@ -45,6 +50,10 @@ export async function getScanResults() {
 }
 
 export async function getScanById(scanId) {
+  if (!scanId || !scanId.toString().trim()) {
+    throw new AppError("scanId is required", 400);
+  }
+
   const session = await getScanSession(scanId);
 
   if (!session) {
@@ -55,10 +64,18 @@ export async function getScanById(scanId) {
 }
 
 export async function getNextProfileForVerification(scanId) {
+  if (!scanId || !scanId.toString().trim()) {
+    throw new AppError("scanId is required", 400);
+  }
+
   return getNextPendingProfile(scanId);
 }
 
 export async function completeCurrentVerification(data) {
+  if (!data || !data.scanId || !data.verificationStatus) {
+    throw new AppError("scanId and verification status are required", 400);
+  }
+
   const updatedProfile = await updateCurrentProfileVerification({
     scanId: data.scanId,
     verificationStatus: data.verificationStatus,

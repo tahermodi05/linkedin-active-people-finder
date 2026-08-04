@@ -1,4 +1,8 @@
-const API_BASE_URL = "http://localhost:3000";
+const API_BASE_URL = (
+  (typeof globalThis !== "undefined" && globalThis.__VERIQ_BACKEND_URL__)
+    ? String(globalThis.__VERIQ_BACKEND_URL__)
+    : "http://localhost:3000"
+).replace(/\/$/, "");
 
 let currentScanId = null;
 

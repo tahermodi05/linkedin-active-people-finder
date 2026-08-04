@@ -4,6 +4,7 @@ import {
   getDashboardScan as getDashboardScanService,
 } from "../services/dashboardService.js";
 
+import { AppError } from "../errors/AppError.js";
 import { successResponse } from "../utils/response.js";
 
 export async function getDashboardSummary(req, res, next) {
@@ -28,7 +29,13 @@ export async function getDashboardScans(req, res, next) {
 
 export async function getDashboardScan(req, res, next) {
   try {
-    const result = await getDashboardScanService(req.params.scanId);
+    const scanId = req.params.scanId?.toString().trim();
+
+    if (!scanId) {
+      throw new AppError("scanId is required", 400);
+    }
+
+    const result = await getDashboardScanService(scanId);
 
     return successResponse(res, result, "Dashboard scan retrieved");
   } catch (error) {

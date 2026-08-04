@@ -7,6 +7,7 @@ import {
   completeCurrentVerification as completeCurrentVerificationService,
 } from "../services/searchService.js";
 
+import { AppError } from "../errors/AppError.js";
 import { successResponse, errorResponse } from "../utils/response.js";
 
 export async function search(req, res, next) {
@@ -39,7 +40,7 @@ export async function getLatestScan(req, res, next) {
 
 export async function getScanResults(req, res, next) {
   try {
-    const scanId = req.query?.scanId;
+    const scanId = req.query?.scanId?.toString().trim();
 
     if (scanId) {
       const result = await getScanByIdService(scanId);
@@ -65,7 +66,13 @@ export async function getScanResults(req, res, next) {
 
 export async function getNextProfile(req, res, next) {
   try {
-    const result = await getNextProfileForVerification(req.query?.scanId);
+    const scanId = req.query?.scanId?.toString().trim();
+
+    if (!scanId) {
+      throw new AppError("scanId is required", 400);
+    }
+
+    const result = await getNextProfileForVerification(scanId);
 
     return successResponse(
       res,

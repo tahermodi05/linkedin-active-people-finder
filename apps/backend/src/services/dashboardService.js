@@ -1,3 +1,4 @@
+import { AppError } from "../errors/AppError.js";
 import {
   getDashboardSummary as getScanStoreDashboardSummary,
   getAllScanSessions,
@@ -65,11 +66,15 @@ export async function getDashboardScans() {
 }
 
 export async function getDashboardScan(scanId) {
+  if (!scanId || !scanId.toString().trim()) {
+    throw new AppError("scanId is required", 400);
+  }
+
   const sessions = await getAllScanSessions();
   const session = sessions.find((item) => item.scanId === scanId);
 
   if (!session) {
-    return null;
+    throw new AppError("Scan not found", 404);
   }
 
   return enrichDashboardScan(session, true);

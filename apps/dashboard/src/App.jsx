@@ -11,7 +11,7 @@ function App() {
   useEffect(() => {
     async function loadScans() {
       try {
-        const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+        const backendUrl = (import.meta.env.VITE_BACKEND_URL || "http://localhost:3000").replace(/\/$/, "");
         const response = await fetch(`${backendUrl}/api/dashboard/scans`);
 
         if (!response.ok) {
@@ -32,7 +32,7 @@ function App() {
     try {
       setLoading(true);
       setError("");
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+      const backendUrl = (import.meta.env.VITE_BACKEND_URL || "http://localhost:3000").replace(/\/$/, "");
       const response = await fetch(`${backendUrl}/api/dashboard/scans/${scanId}`);
 
       if (!response.ok) {

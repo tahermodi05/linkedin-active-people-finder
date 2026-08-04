@@ -1,5 +1,5 @@
 function getPort() {
-  const value = process.env.PORT;
+  const value = process.env.PORT?.trim();
 
   if (!value) {
     throw new Error("PORT environment variable is required.");
@@ -20,9 +20,29 @@ function getPort() {
   return port;
 }
 
+function parseList(value, fallback) {
+  if (!value) {
+    return fallback;
+  }
+
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 const config = {
   port: getPort(),
-  persistence: process.env.PERSISTENCE || "postgres",
+  persistence: process.env.PERSISTENCE?.trim() || "postgres",
+  corsOrigin: parseList(process.env.CORS_ORIGIN, [
+    "http://localhost:4173",
+    "http://127.0.0.1:4173",
+  ]),
+  corsMethods: parseList(process.env.CORS_METHODS, ["GET", "POST", "OPTIONS"]),
+  corsAllowedHeaders: parseList(process.env.CORS_ALLOWED_HEADERS, [
+    "Content-Type",
+    "Authorization",
+  ]),
 };
 
 export default config;

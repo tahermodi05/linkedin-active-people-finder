@@ -10,9 +10,26 @@ import healthRouter from "./routes/health.js";
 import searchRouter from "./routes/searchRoutes.js";
 import dashboardRouter from "./routes/dashboardRoutes.js";
 import { checkDatabaseConnection } from "./database/healthCheck.js";
+import { closeDatabaseConnection } from "./database/client.js";
 
 const app = express();
 const PORT = config.port;
+
+function logEvent(event, details = {}) {
+  console.log(JSON.stringify({
+    level: "info",
+    event,
+    ...details,
+  }));
+}
+
+function logFailure(event, details = {}) {
+  console.error(JSON.stringify({
+    level: "error",
+    event,
+    ...details,
+  }));
+}
 
 async function validateStartupConfiguration() {
   if (config.persistence !== "postgres") {
@@ -29,9 +46,9 @@ async function validateStartupConfiguration() {
 // CORS
 app.use(
   cors({
-    origin: "*",
-    methods: ["GET", "POST", "OPTIONS"],
-    allowedHeaders: ["Content-Type"],
+    origin: config.corsOrigin,
+    methods: config.corsMethods,
+    allowedHeaders: config.corsAllowedHeaders,
   })
 );
 
@@ -51,15 +68,69 @@ app.use("/api/dashboard", dashboardRouter);
 // Error handler MUST be last
 app.use(errorHandler);
 
-await validateStartupConfiguration();
+async function startServer() {
+  try {
+    await validateStartupConfiguration();
 
-const server = app.listen(PORT, () => {
-  console.log(`🚀 Server is running on http://localhost:${PORT}`);
-});
+    const server = app.listen(PORT, () => {
+      logEvent("server_start", {
+        port: PORT,
+        pid: process.pid,
+        environment: process.env.NODE_ENV || "development",
+      });
+    });
 
-console.log(server.listening);
-console.log(process.pid);
+    const shutdown = async (signal) => {
+      logEvent("server_shutdown", {
+        signal,
+        pid: process.pid,
+      });
 
-setInterval(() => {
-  console.log("alive");
-}, 5000);
+      if (!server.listening) {
+        await closeDatabaseConnection();
+        process.exit(0);
+        return;
+      }
+
+      server.close(async (error) => {
+        if (error) {
+          logFailure("server_shutdown_error", {
+            message: error.message,
+          });
+          await closeDatabaseConnection();
+          process.exit(1);
+          return;
+        }
+
+        await closeDatabaseConnection();
+        process.exit(0);
+      });
+    };
+
+    process.once("SIGTERM", () => {
+      shutdown("SIGTERM").catch((error) => {
+        logFailure("server_shutdown_error", {
+          message: error.message,
+        });
+        process.exit(1);
+      });
+    });
+
+    process.once("SIGINT", () => {
+      shutdown("SIGINT").catch((error) => {
+        logFailure("server_shutdown_error", {
+          message: error.message,
+        });
+        process.exit(1);
+      });
+    });
+  } catch (error) {
+    logFailure("server_start_failed", {
+      message: error.message,
+      stack: error.stack,
+    });
+    process.exit(1);
+  }
+}
+
+await startServer();
