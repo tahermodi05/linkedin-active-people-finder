@@ -22,20 +22,103 @@ class PostgresScanRepository {
     };
   }
 
-  mapSessionRow(sessionRow, profiles = []) {
+  getVerificationSummary(profiles = []) {
+    const total = profiles.length;
+    let pending = 0;
+    let verified = 0;
+    let failed = 0;
+
+    for (const profile of profiles) {
+      const status = String(profile?.verificationStatus || "").trim().toLowerCase();
+      const hasVerifiedAt = Boolean(profile?.verifiedAt);
+      const currentlyWorksHere = profile?.currentlyWorksHere;
+
+      if (status === "failed" || status === "rejected" || status === "error" || currentlyWorksHere === false) {
+        failed += 1;
+      } else if (status === "pending" || status === "" || !hasVerifiedAt) {
+        pending += 1;
+      } else {
+        verified += 1;
+      }
+    }
+
+    return { total, pending, verified, failed };
+  }
+
+  getVerificationRate(verificationSummary) {
+    if (!verificationSummary.total) {
+      return 0;
+    }
+
+    return Number(((verificationSummary.verified / verificationSummary.total) * 100).toFixed(2));
+  }
+
+  mapSessionRow(sessionRow, profiles = [], progress = {}) {
     if (!sessionRow) {
       return null;
     }
 
+    const normalizedProfiles = profiles.map((profile) => this.normalizeProfile(profile));
+    const verificationSummary = this.getVerificationSummary(normalizedProfiles);
+    const totalProfiles = progress.totalProfiles ?? sessionRow.total_profiles;
+    const verifiedProfiles = progress.verifiedProfiles ?? sessionRow.verified_profiles;
+    const pendingProfileIndex = progress.pendingProfileIndex ?? 0;
+    const status = progress.status ?? sessionRow.status;
+    const completedAt = progress.completedAt ?? sessionRow.completed_at;
+
     return {
       scanId: sessionRow.scan_id,
-      status: sessionRow.status,
+      status,
       startedAt: sessionRow.started_at,
-      completedAt: sessionRow.completed_at,
-      totalProfiles: sessionRow.total_profiles,
-      verifiedProfiles: sessionRow.verified_profiles,
-      profiles: profiles.map((profile) => this.normalizeProfile(profile)),
-      pendingProfileIndex: 0,
+      completedAt,
+      totalProfiles,
+      verifiedProfiles,
+      profiles: normalizedProfiles,
+      pendingProfileIndex,
+      pendingProfiles: verificationSummary.pending,
+      failedProfiles: verificationSummary.failed,
+      verificationRate: this.getVerificationRate(verificationSummary),
+      verificationSummary,
+    };
+  }
+
+  async getSessionProgress(scanId, sessionRow = null) {
+    const currentSessionRow = sessionRow || (await pool.query(
+      `
+        SELECT scan_id, status, started_at, completed_at, total_profiles, verified_profiles
+        FROM scan_sessions
+        WHERE scan_id = $1
+      `,
+      [scanId]
+    )).rows[0];
+
+    if (!currentSessionRow) {
+      return null;
+    }
+
+    const processedCountResult = await pool.query(
+      `
+        SELECT COUNT(*)::int AS processed_count
+        FROM scan_profiles
+        WHERE scan_id = $1
+          AND verified_at IS NOT NULL
+      `,
+      [scanId]
+    );
+
+    const processedCount = processedCountResult.rows[0]?.processed_count || 0;
+    const totalProfiles = currentSessionRow.total_profiles || 0;
+    const verifiedProfiles = processedCount;
+    const completedAt = verifiedProfiles >= totalProfiles
+      ? currentSessionRow.completed_at ?? new Date().toISOString()
+      : null;
+
+    return {
+      status: verifiedProfiles >= totalProfiles ? "completed" : currentSessionRow.status,
+      completedAt,
+      totalProfiles,
+      verifiedProfiles,
+      pendingProfileIndex: verifiedProfiles,
     };
   }
 
@@ -64,7 +147,7 @@ class PostgresScanRepository {
       [scanId]
     );
 
-    return result.rows.find((row) => row.verification_status !== "processed") || null;
+    return result.rows.find((row) => row.verified_at === null) || null;
   }
 
   async createScanSession(scanId, profiles) {
@@ -117,13 +200,13 @@ class PostgresScanRepository {
 
   async setLatestScan(profiles = []) {
     const scanId = randomUUID();
-    await this.createScanSession(scanId, profiles);
+    return this.createScanSession(scanId, profiles);
   }
 
   async getLatestScan() {
     const sessionResult = await pool.query(
       `
-        SELECT scan_id
+        SELECT *
         FROM scan_sessions
         ORDER BY started_at DESC
         LIMIT 1
@@ -133,10 +216,13 @@ class PostgresScanRepository {
     const latestSession = sessionResult.rows[0];
 
     if (!latestSession) {
-      return [];
+      return null;
     }
 
-    return await this.getProfilesForScan(latestSession.scan_id);
+    const profiles = await this.getProfilesForScan(latestSession.scan_id);
+    const progress = await this.getSessionProgress(latestSession.scan_id, latestSession);
+
+    return this.mapSessionRow({ ...latestSession, ...progress }, profiles, progress);
   }
 
   async getNextPendingProfile(scanId = null) {
@@ -175,7 +261,9 @@ class PostgresScanRepository {
     }
 
     const profiles = await this.getProfilesForScan(scanId);
-    return this.mapSessionRow(result.rows[0], profiles);
+    const progress = await this.getSessionProgress(scanId, result.rows[0]);
+
+    return this.mapSessionRow({ ...result.rows[0], ...progress }, profiles, progress);
   }
 
   async getAllScanSessions() {
@@ -191,7 +279,8 @@ class PostgresScanRepository {
 
     for (const sessionRow of result.rows) {
       const profiles = await this.getProfilesForScan(sessionRow.scan_id);
-      sessions.push(this.mapSessionRow(sessionRow, profiles));
+      const progress = await this.getSessionProgress(sessionRow.scan_id, sessionRow);
+      sessions.push(this.mapSessionRow({ ...sessionRow, ...progress }, profiles, progress));
     }
 
     return sessions;
@@ -200,12 +289,21 @@ class PostgresScanRepository {
   async getDashboardSummary() {
     const result = await pool.query(
       `
-        SELECT status, total_profiles, verified_profiles
+        SELECT *
         FROM scan_sessions
+        ORDER BY started_at DESC
       `
     );
 
-    return result.rows.reduce(
+    const sessions = [];
+
+    for (const sessionRow of result.rows) {
+      const profiles = await this.getProfilesForScan(sessionRow.scan_id);
+      const progress = await this.getSessionProgress(sessionRow.scan_id, sessionRow);
+      sessions.push(this.mapSessionRow({ ...sessionRow, ...progress }, profiles, progress));
+    }
+
+    return sessions.reduce(
       (summary, session) => {
         summary.totalScans += 1;
 
@@ -215,8 +313,10 @@ class PostgresScanRepository {
           summary.runningScans += 1;
         }
 
-        summary.totalProfiles += session.total_profiles || 0;
-        summary.verifiedProfiles += session.verified_profiles || 0;
+        summary.totalProfiles += session.totalProfiles || 0;
+        summary.verifiedProfiles += session.verifiedProfiles || 0;
+        summary.pendingProfiles += session.pendingProfiles || 0;
+        summary.failedProfiles += session.failedProfiles || 0;
 
         return summary;
       },
@@ -226,6 +326,9 @@ class PostgresScanRepository {
         completedScans: 0,
         totalProfiles: 0,
         verifiedProfiles: 0,
+        pendingProfiles: 0,
+        failedProfiles: 0,
+        verificationRate: 0,
       }
     );
   }
@@ -316,10 +419,10 @@ class PostgresScanRepository {
     await pool.query(
       `
         UPDATE scan_profiles
-        SET verification_status = 'processed'
+        SET verified_at = COALESCE(verified_at, $2)
         WHERE id = $1
       `,
-      [pendingProfile.id]
+      [pendingProfile.id, new Date().toISOString()]
     );
 
     const processedCountResult = await pool.query(

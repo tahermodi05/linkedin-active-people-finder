@@ -23,33 +23,28 @@ The backend is organized as a thin layered API:
 - The Repository layer owns scan-session persistence and exposes summary/list/detail access.
 - The dashboard module reuses the repository layer rather than introducing a separate persistence layer.
 
-### Current backend flow
+### MVP Dashboard Milestone
 
-```text
-Chrome Extension
-        │
-        ▼
-Express API
-        │
- ┌───────────────┐
- │ Search Module │
- └───────────────┘
-        │
- ┌─────────────────┐
- │ Dashboard Module│
- └─────────────────┘
-        │
-        ▼
-Repository
-        │
- ┌─────────────────┐
- │ In-Memory Store │
- │ (current)       │
- └─────────────────┘
-        │
-        ▼
-PostgreSQL (future)
-```
+The current milestone adds a lightweight React + Vite dashboard app for viewing scan results and profile intelligence.
+
+#### User flow
+
+1. Start the backend and dashboard locally.
+2. Open the dashboard and view the scan list.
+3. Open a scan to review its metadata, profile cards, and verification state.
+
+#### Dashboard features
+
+- Scan list with status, profile counts, and verification rate.
+- Scan detail view with per-scan metadata.
+- Profile intelligence cards with identity, verification, and activity data.
+- Simple client-side filtering and sorting for profiles.
+
+#### Backend improvements
+
+- PostgreSQL is now the default local persistence path for scan lifecycle state.
+- Dashboard APIs expose richer summary and detail payloads with verification-derived fields.
+- Legacy search responses remain compatible for existing consumers.
 
 ### Current API surface
 
@@ -61,6 +56,11 @@ PostgreSQL (future)
 - Each search creates a backend-generated scanId.
 - Each scan session carries metadata including status, startedAt, completedAt, totalProfiles, and verifiedProfiles.
 - Verification updates the active session while preserving backward compatibility for legacy scan endpoints.
+
+### Local development
+
+- Backend: `cd apps/backend && npm start`
+- Dashboard: `npm run dev --workspace apps/dashboard -- --host 0.0.0.0 --port 4173`
 
 ## Modules
 

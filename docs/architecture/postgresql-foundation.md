@@ -125,6 +125,16 @@ Field naming is aligned with the existing store behavior.
 Profile and session responses preserve the expected application shapes.
 Pending profile processing behavior was aligned with the existing store behavior.
 
+## MVP Dashboard Alignment
+
+The PostgreSQL-backed scan workflow now supports the MVP dashboard milestone.
+
+Implemented improvements include:
+
+- PostgreSQL-backed scan lifecycle persistence for session and profile state.
+- Dashboard summary and detail payloads with verification-derived fields such as pending profiles, failed profiles, and verification rate.
+- Compatibility restoration for the legacy search API response shape.
+
 ## Testing Status
 
 Backend startup was verified.
