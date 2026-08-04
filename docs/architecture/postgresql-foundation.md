@@ -42,3 +42,40 @@ The first PostgreSQL implementation will support:
 - No persistence switch yet
 - Repository boundary must remain unchanged
 - Controllers and services should not know database details
+
+## Initial Table Draft
+
+### scan_sessions
+
+Purpose:
+Stores search scan lifecycle information.
+
+Fields:
+
+- id
+- scan_id
+- status
+- started_at
+- completed_at
+- total_profiles
+- verified_profiles
+
+### scan_profiles
+
+Purpose:
+Stores profiles discovered during a scan.
+
+Fields:
+
+- id
+- scan_id
+- name
+- profile_url
+- headline
+- connection_degree
+- mutual_connections
+- verification_status
+- currently_works_here
+- verified_at
+- activity_intelligence
+- verification_confidence
