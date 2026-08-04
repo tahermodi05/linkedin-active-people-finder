@@ -22,6 +22,7 @@ function getPort() {
 
 const config = {
   port: getPort(),
+  persistence: process.env.PERSISTENCE || "memory",
 };
 
 export default config;
