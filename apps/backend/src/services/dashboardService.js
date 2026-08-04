@@ -1,7 +1,7 @@
 import {
   getDashboardSummary as getScanStoreDashboardSummary,
   getAllScanSessions,
-} from "../store/scanStore.js";
+} from "../repositories/scanRepository.js";
 
 export async function getDashboardSummary() {
   return getScanStoreDashboardSummary();

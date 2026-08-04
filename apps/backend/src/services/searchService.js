@@ -8,7 +8,7 @@ import {
   updateCurrentProfileVerification,
   markCurrentProfileProcessed,
   getScanSession,
-} from "../store/scanStore.js";
+} from "../repositories/scanRepository.js";
 
 const scanSessionMetadata = new Map();
 
