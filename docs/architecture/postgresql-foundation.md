@@ -1,0 +1,44 @@
+# PostgreSQL Foundation
+
+## Purpose
+
+This document describes the future PostgreSQL persistence layer for Veriq.
+
+The current application continues using in-memory persistence.
+
+PostgreSQL will be introduced without changing service or controller responsibilities.
+
+## Current Flow
+
+Services
+↓
+Repository
+↓
+In-memory Store
+
+## Future Flow
+
+Services
+↓
+Repository
+↓
+PostgreSQL Repository
+↓
+PostgreSQL Database
+
+## Initial Data Areas
+
+The first PostgreSQL implementation will support:
+
+- Scan sessions
+- Profiles attached to scans
+- Verification progress
+- Verification results
+
+## Design Rules
+
+- No ORM initially
+- No migrations yet
+- No persistence switch yet
+- Repository boundary must remain unchanged
+- Controllers and services should not know database details
