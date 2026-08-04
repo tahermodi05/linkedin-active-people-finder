@@ -46,7 +46,22 @@ async function validateStartupConfiguration() {
 // CORS
 app.use(
   cors({
-    origin: config.corsOrigin,
+    origin: (origin, callback) => {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+
+      const allowedOrigins = config.corsOrigin;
+      const isAllowed = allowedOrigins.includes(origin);
+
+      if (isAllowed) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`Origin not allowed by CORS: ${origin}`));
+    },
     methods: config.corsMethods,
     allowedHeaders: config.corsAllowedHeaders,
   })
