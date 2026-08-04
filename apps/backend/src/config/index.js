@@ -22,7 +22,7 @@ function getPort() {
 
 const config = {
   port: getPort(),
-  persistence: process.env.PERSISTENCE || "memory",
+  persistence: process.env.PERSISTENCE || "postgres",
 };
 
 export default config;

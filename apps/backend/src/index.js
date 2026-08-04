@@ -9,9 +9,22 @@ import { errorHandler } from "./middleware/errorHandler.js";
 import healthRouter from "./routes/health.js";
 import searchRouter from "./routes/searchRoutes.js";
 import dashboardRouter from "./routes/dashboardRoutes.js";
+import { checkDatabaseConnection } from "./database/healthCheck.js";
 
 const app = express();
 const PORT = config.port;
+
+async function validateStartupConfiguration() {
+  if (config.persistence !== "postgres") {
+    return;
+  }
+
+  try {
+    await checkDatabaseConnection();
+  } catch (error) {
+    throw new Error(`PostgreSQL startup validation failed: ${error.message}`);
+  }
+}
 
 // CORS
 app.use(
@@ -37,6 +50,8 @@ app.use("/api/dashboard", dashboardRouter);
 
 // Error handler MUST be last
 app.use(errorHandler);
+
+await validateStartupConfiguration();
 
 const server = app.listen(PORT, () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`);

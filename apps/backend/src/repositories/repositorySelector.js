@@ -8,4 +8,4 @@ const repositories = {
   postgres: postgresRepository,
 };
 
-export default repositories[config.persistence] || repositories.memory;
+export default repositories[config.persistence] || repositories.postgres;

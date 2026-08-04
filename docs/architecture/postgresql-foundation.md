@@ -2,21 +2,13 @@
 
 ## Purpose
 
-This document describes the future PostgreSQL persistence layer for Veriq.
+This document describes the PostgreSQL persistence layer for Veriq.
 
-The current application continues using in-memory persistence.
-
-PostgreSQL will be introduced without changing service or controller responsibilities.
+PostgreSQL is now the default persistence path for the scan workflow in local development.
+Memory persistence remains available through explicit configuration.
+The repository boundary remains unchanged and services/controllers do not need to know about the storage implementation.
 
 ## Current Flow
-
-Services
-↓
-Repository
-↓
-In-memory Store
-
-## Future Flow
 
 Services
 ↓
@@ -25,6 +17,10 @@ Repository
 PostgreSQL Repository
 ↓
 PostgreSQL Database
+
+## Explicit Memory Override
+
+Memory persistence remains available when `PERSISTENCE=memory` is set explicitly.
 
 ## Initial Data Areas
 
@@ -98,7 +94,7 @@ Not implemented yet:
 - Verification updates
 - Full PostgreSQL persistence switch
 
-The application continues using the memory repository by default.
+The application now defaults to the PostgreSQL repository in local development.
 
 - `createScanProfile` PostgreSQL operation prepared
 - `getScanSession` PostgreSQL operation prepared
@@ -137,6 +133,7 @@ JavaScript syntax checks were performed.
 The existing test suite passed: 29 tests passed.
 Real PostgreSQL repository verification was completed successfully against the local PostgreSQL instance.
 The verification script at `apps/backend/scripts/verify-postgres-repository.js` exercised `createScanSession`, `getScanSession`, `setLatestScan`, `getLatestScan`, and `getDashboardSummary`.
+Startup validation now checks PostgreSQL connectivity when PostgreSQL is selected.
 
 ## Local Development Setup
 
