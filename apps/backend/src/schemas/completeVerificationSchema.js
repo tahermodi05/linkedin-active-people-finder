@@ -14,5 +14,7 @@ export const completeVerificationSchema = z
         level: z.string(),
       })
       .optional(),
+
+    scanId: z.string().optional(),
   })
   .strict();

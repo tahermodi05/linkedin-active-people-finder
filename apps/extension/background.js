@@ -1,10 +1,12 @@
-import { apiRequest } from "./services/backendApi.js";
+import { apiRequest, setCurrentScanId } from "./services/backendApi.js";
 import { MESSAGE_TYPES } from "./shared/messageTypes.js";
 
 import {
   startVerificationWorker,
   startVerificationLifecycle,
 } from "./workers/verificationWorker.js";
+
+let currentScanId = null;
 
 startVerificationWorker();
 
@@ -74,6 +76,8 @@ async function handleStartScan(sendResponse) {
     });
 
     const result = await backendResponse.json();
+    currentScanId = result?.data?.scanId ?? null;
+    setCurrentScanId(currentScanId);
 
     if (!backendResponse.ok) {
   throw new Error(result.message || "Backend request failed");

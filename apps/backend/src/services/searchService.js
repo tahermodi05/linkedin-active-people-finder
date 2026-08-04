@@ -1,4 +1,7 @@
+import { randomUUID } from "crypto";
+
 import {
+  createScanSession,
   setLatestScan,
   getLatestScan as getLatestScanFromStore,
   getNextPendingProfile,
@@ -14,9 +17,13 @@ export async function searchPeople(data) {
     verifiedAt: null,
   }));
 
+  const scanId = randomUUID();
+
   setLatestScan(profiles);
+  createScanSession(scanId, profiles);
 
   return {
+    scanId,
     totalProfiles: profiles.length,
     profiles,
   };
@@ -39,6 +46,7 @@ export async function getNextProfileForVerification() {
 
 export async function completeCurrentVerification(data) {
   const updatedProfile = updateCurrentProfileVerification({
+    scanId: data.scanId,
     verificationStatus: data.verificationStatus,
     currentlyWorksHere: data.currentlyWorksHere,
     activityIntelligence: data.activityIntelligence,
@@ -53,7 +61,7 @@ export async function completeCurrentVerification(data) {
     };
   }
 
-  markCurrentProfileProcessed();
+  markCurrentProfileProcessed(data.scanId);
 
   return {
     success: true,
