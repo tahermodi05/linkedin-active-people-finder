@@ -22,6 +22,7 @@ export function updateCurrentProfileVerification({
   verificationStatus,
   currentlyWorksHere,
   activityIntelligence,
+  verificationConfidence,
   verifiedAt,
 }) {
   if (pendingProfileIndex >= latestScan.length) {
@@ -33,6 +34,7 @@ export function updateCurrentProfileVerification({
     verificationStatus,
     currentlyWorksHere,
     activityIntelligence,
+    verificationConfidence,
     verifiedAt,
   };
 

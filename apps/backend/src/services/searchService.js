@@ -42,6 +42,7 @@ export async function completeCurrentVerification(data) {
     verificationStatus: data.verificationStatus,
     currentlyWorksHere: data.currentlyWorksHere,
     activityIntelligence: data.activityIntelligence,
+    verificationConfidence: data.verificationConfidence,
     verifiedAt: new Date().toISOString(),
   });
 

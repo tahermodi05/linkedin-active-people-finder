@@ -45,7 +45,7 @@
 - Sender: `content.js`
 - Receiver: `verificationWorker.js`
 - Purpose: Return verified profile data
-- Payload: `{ profileUrl, name, verified, headline, company, location, currentRole, currentlyWorking, employmentConfidence, experience }`
+- Payload: `{ profileUrl, fullName, verified, headline, currentCompany, location, currentRole, currentlyWorking, employmentConfidence, experience }`
 - Expected response: none
 
 ## `ACTIVITY_PAGE_READY`

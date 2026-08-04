@@ -3,6 +3,7 @@ import {
   getNextProfileForVerification,
 } from "../services/backendApi.js";
 import { MESSAGE_TYPES } from "../shared/messageTypes.js";
+import { calculateVerificationConfidence } from "../verification/confidenceEngine.js";
 
 let currentActivityIntelligence = null;
 
@@ -123,7 +124,7 @@ function waitForVerificationResult(tabId) {
 }
 
 function determineCurrentlyWorksHere(verificationResult) {
-  if (verificationResult?.company) {
+  if (verificationResult?.currentCompany) {
     return true;
   }
 
@@ -221,6 +222,10 @@ export async function startVerificationLifecycle() {
       "Waiting for PROFILE_VERIFIED"
     );
     const verificationResult = await verificationPromise;
+    const verifiedProfileWithConfidence = {
+      ...verificationResult,
+      verificationConfidence: calculateVerificationConfidence(verificationResult),
+    };
     console.log(
       "[Verification]",
       tab.id,
@@ -228,7 +233,7 @@ export async function startVerificationLifecycle() {
       "PROFILE_VERIFIED received"
     );
 
-    console.log("Verification completed", verificationResult);
+    console.log("Verification completed", verifiedProfileWithConfidence);
 
     const activityUrl = buildRecentActivityUrl(profile.profileUrl);
 
@@ -310,7 +315,7 @@ export async function startVerificationLifecycle() {
     );
     await completeCurrentVerification({
       verificationStatus: "completed",
-      currentlyWorksHere: determineCurrentlyWorksHere(verificationResult),
+      currentlyWorksHere: determineCurrentlyWorksHere(verifiedProfileWithConfidence),
       activityIntelligence: currentActivityIntelligence,
     });
     console.log(

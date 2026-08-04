@@ -350,10 +350,10 @@ function registerMessageListener() {
             type: MESSAGE_TYPES.PROFILE_VERIFIED,
             payload: {
               profileUrl,
-              name: extractedProfile.fullName,
+              fullName: extractedProfile.fullName,
               verified: true,
               headline: extractedProfile.headline,
-              company: extractedProfile.currentCompany,
+              currentCompany: extractedProfile.currentCompany,
               location: extractedProfile.location,
               currentRole: extractedProfile.currentRole,
               currentlyWorking: extractedProfile.currentlyWorking,
