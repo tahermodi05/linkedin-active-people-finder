@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "verify:postgres-repository": "node scripts/verify-postgres-repository.js"
   },
   "keywords": [],
   "author": "",

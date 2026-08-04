@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import pool from "../../database/client.js";
 import { scanQueries } from "../../database/queries/scanQueries.js";
 
@@ -68,11 +69,12 @@ class PostgresScanRepository {
 
   async createScanSession(scanId, profiles) {
     const startedAt = new Date().toISOString();
+    const targetScanId = scanId || randomUUID();
 
     const sessionResult = await pool.query(
       scanQueries.createScanSession,
       [
-        scanId,
+        targetScanId,
         "running",
         startedAt,
         null,
@@ -81,7 +83,7 @@ class PostgresScanRepository {
       ]
     );
 
-    await this.createScanProfiles(scanId, profiles);
+    await this.createScanProfiles(targetScanId, profiles);
 
     return this.mapSessionRow(sessionResult.rows[0], profiles);
   }
@@ -114,7 +116,7 @@ class PostgresScanRepository {
   }
 
   async setLatestScan(profiles = []) {
-    const scanId = `latest-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const scanId = randomUUID();
     await this.createScanSession(scanId, profiles);
   }
 
@@ -168,7 +170,12 @@ class PostgresScanRepository {
       [scanId]
     );
 
-    return result.rows[0] ? await this.getProfilesForScan(scanId) : null;
+    if (!result.rows[0]) {
+      return null;
+    }
+
+    const profiles = await this.getProfilesForScan(scanId);
+    return this.mapSessionRow(result.rows[0], profiles);
   }
 
   async getAllScanSessions() {

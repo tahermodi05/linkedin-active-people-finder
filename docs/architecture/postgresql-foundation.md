@@ -135,4 +135,42 @@ Backend startup was verified.
 API health response was verified.
 JavaScript syntax checks were performed.
 The existing test suite passed: 29 tests passed.
-Real PostgreSQL database execution testing is pending because PostgreSQL is not currently installed locally.
+Real PostgreSQL repository verification was completed successfully against the local PostgreSQL instance.
+The verification script at `apps/backend/scripts/verify-postgres-repository.js` exercised `createScanSession`, `getScanSession`, `setLatestScan`, `getLatestScan`, and `getDashboardSummary`.
+
+## Local Development Setup
+
+Local PostgreSQL can be started with Docker Compose from the repository root:
+
+```bash
+docker compose up -d postgres
+```
+
+The local development database uses:
+
+- host: `localhost`
+- port: `5432`
+- database: `veriq`
+- user: `postgres`
+- password: `postgres`
+
+Required environment variables for the backend are:
+
+- `DB_HOST=localhost`
+- `DB_PORT=5432`
+- `DB_NAME=veriq`
+- `DB_USER=postgres`
+- `DB_PASSWORD=postgres`
+
+The scan schema can be applied manually with:
+
+```bash
+psql "postgresql://postgres:postgres@localhost:5432/veriq" -f apps/backend/src/database/schema/scan-schema.sql
+```
+
+The schema file remains a local development scaffold and does not change the existing repository architecture.
+
+## Schema Application Before Repository Tests
+
+The PostgreSQL schema file at `apps/backend/src/database/schema/scan-schema.sql` must be applied before running PostgreSQL repository tests.
+It creates the required PostgreSQL tables for scan sessions and scan profiles.
