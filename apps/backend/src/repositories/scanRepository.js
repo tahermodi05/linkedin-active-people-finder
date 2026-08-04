@@ -13,7 +13,9 @@
  * on a specific persistence implementation.
  */
 
-export {
+import repository from "./repositorySelector.js";
+
+export const {
   createScanSession,
   setLatestScan,
   getLatestScan,
@@ -23,4 +25,4 @@ export {
   getDashboardSummary,
   updateCurrentProfileVerification,
   markCurrentProfileProcessed,
-} from "../store/scanStore.js";
+} = repository;
