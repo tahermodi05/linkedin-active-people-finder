@@ -5,6 +5,12 @@ let pendingProfileIndex = 0;
 
 export function createScanSession(scanId, profiles) {
   scanSessions.set(scanId, {
+    scanId,
+    status: "running",
+    startedAt: new Date().toISOString(),
+    completedAt: null,
+    totalProfiles: profiles.length,
+    verifiedProfiles: 0,
     profiles: [...profiles],
     pendingProfileIndex: 0,
   });
@@ -90,6 +96,12 @@ export function markCurrentProfileProcessed(scanId) {
 
     if (session && session.pendingProfileIndex < session.profiles.length) {
       session.pendingProfileIndex += 1;
+      session.verifiedProfiles += 1;
+
+      if (session.verifiedProfiles === session.totalProfiles) {
+        session.status = "completed";
+        session.completedAt = new Date().toISOString();
+      }
     }
 
     return;

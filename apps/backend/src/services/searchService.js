@@ -10,6 +10,38 @@ import {
   getScanSession,
 } from "../store/scanStore.js";
 
+const scanSessionMetadata = new Map();
+
+function syncSessionMetadata(scanId) {
+  const session = scanSessionMetadata.get(scanId);
+
+  if (!session) {
+    return null;
+  }
+
+  const profiles = getScanSession(scanId);
+
+  if (!profiles) {
+    return null;
+  }
+
+  session.profiles = profiles;
+  session.totalProfiles = profiles.length;
+  session.pendingProfileIndex = profiles.filter(
+    (profile) => profile.verificationStatus !== "pending"
+  ).length;
+  session.verifiedProfiles = session.pendingProfileIndex;
+
+  if (session.verifiedProfiles === session.totalProfiles) {
+    session.status = "completed";
+    session.completedAt = session.completedAt ?? new Date().toISOString();
+  } else {
+    session.status = "running";
+  }
+
+  return session;
+}
+
 export async function searchPeople(data) {
   const profiles = data.profiles.map((profile) => ({
     ...profile,
@@ -22,6 +54,17 @@ export async function searchPeople(data) {
 
   setLatestScan(profiles);
   createScanSession(scanId, profiles);
+
+  scanSessionMetadata.set(scanId, {
+    scanId,
+    status: "running",
+    startedAt: new Date().toISOString(),
+    completedAt: null,
+    totalProfiles: profiles.length,
+    verifiedProfiles: 0,
+    profiles,
+    pendingProfileIndex: 0,
+  });
 
   return {
     scanId,
@@ -42,7 +85,7 @@ export async function getScanResults() {
 }
 
 export async function getScanById(scanId) {
-  return getScanSession(scanId);
+  return syncSessionMetadata(scanId);
 }
 
 export async function getNextProfileForVerification() {
@@ -67,6 +110,7 @@ export async function completeCurrentVerification(data) {
   }
 
   markCurrentProfileProcessed(data.scanId);
+  syncSessionMetadata(data.scanId);
 
   return {
     success: true,
