@@ -28,7 +28,13 @@ export function getNextPendingProfile() {
 }
 
 export function getScanSession(scanId) {
-  return scanSessions.get(scanId) || null;
+  const session = scanSessions.get(scanId);
+
+  if (!session) {
+    return null;
+  }
+
+  return session.profiles;
 }
 
 export function updateCurrentProfileVerification({

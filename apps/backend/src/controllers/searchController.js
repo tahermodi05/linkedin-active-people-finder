@@ -2,11 +2,12 @@ import {
   searchPeople,
   getLatestScan as getLatestScanService,
   getScanResults as getScanResultsService,
+  getScanById as getScanByIdService,
   getNextProfileForVerification,
   completeCurrentVerification as completeCurrentVerificationService,
 } from "../services/searchService.js";
 
-import { successResponse } from "../utils/response.js";
+import { successResponse, errorResponse } from "../utils/response.js";
 
 export async function search(req, res, next) {
   try {
@@ -38,6 +39,18 @@ export async function getLatestScan(req, res, next) {
 
 export async function getScanResults(req, res, next) {
   try {
+    const scanId = req.query?.scanId;
+
+    if (scanId) {
+      const result = await getScanByIdService(scanId);
+
+      if (!result) {
+        return errorResponse(res, "Scan not found", [], 404);
+      }
+
+      return successResponse(res, result, "Scan results retrieved");
+    }
+
     const result = await getScanResultsService();
 
     return successResponse(

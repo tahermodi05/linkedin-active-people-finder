@@ -7,6 +7,7 @@ import {
   getNextPendingProfile,
   updateCurrentProfileVerification,
   markCurrentProfileProcessed,
+  getScanSession,
 } from "../store/scanStore.js";
 
 export async function searchPeople(data) {
@@ -38,6 +39,10 @@ export async function getLatestScan() {
 
 export async function getScanResults() {
   return getLatestScanFromStore();
+}
+
+export async function getScanById(scanId) {
+  return getScanSession(scanId);
 }
 
 export async function getNextProfileForVerification() {
