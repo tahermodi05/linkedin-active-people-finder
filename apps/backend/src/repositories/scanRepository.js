@@ -4,7 +4,7 @@
  * This module defines the persistence boundary for scan data.
  *
  * Current implementation:
- * - In-memory repository (to be added next)
+ * - In-memory repository
  *
  * Future implementation:
  * - PostgreSQL repository
