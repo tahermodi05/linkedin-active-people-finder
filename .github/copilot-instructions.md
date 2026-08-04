@@ -134,8 +134,10 @@ Activity Intelligence
 Backend
 
 - Validation
-- APIs
+- Search APIs
+- Dashboard APIs
 - Verification pipeline
+- Scan Store API and in-memory scan-session state
 - Future persistence layer
 
 ---
@@ -170,15 +172,27 @@ Rich Profile Object
 
 Backend API
 
+↓
+
+Search Module
+
+↓
+
+Dashboard Module
+
+↓
+
+Scan Store API
+
+↓
+
+In-Memory Store
+
 Future:
 
 ↓
 
-Database
-
-↓
-
-Dashboard
+PostgreSQL
 
 ---
 

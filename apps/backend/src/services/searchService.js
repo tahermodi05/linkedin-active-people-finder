@@ -88,8 +88,8 @@ export async function getScanById(scanId) {
   return syncSessionMetadata(scanId);
 }
 
-export async function getNextProfileForVerification() {
-  return getNextPendingProfile();
+export async function getNextProfileForVerification(scanId) {
+  return getNextPendingProfile(scanId);
 }
 
 export async function completeCurrentVerification(data) {

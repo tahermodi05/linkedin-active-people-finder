@@ -65,7 +65,7 @@ export async function getScanResults(req, res, next) {
 
 export async function getNextProfile(req, res, next) {
   try {
-    const result = await getNextProfileForVerification();
+    const result = await getNextProfileForVerification(req.query?.scanId);
 
     return successResponse(
       res,

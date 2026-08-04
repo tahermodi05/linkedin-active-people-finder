@@ -6,14 +6,19 @@ export function setCurrentScanId(scanId) {
   currentScanId = scanId;
 }
 
+export function getCurrentScanId() {
+  return currentScanId;
+}
+
 export async function apiRequest(path, options = {}) {
   const response = await fetch(`${API_BASE_URL}${path}`, options);
 
   return response;
 }
 
-export async function getNextProfileForVerification() {
-  const response = await apiRequest("/api/search/next");
+export async function getNextProfileForVerification(scanId = currentScanId) {
+  const query = scanId ? `?scanId=${encodeURIComponent(scanId)}` : "";
+  const response = await apiRequest(`/api/search/next${query}`);
 
   const result = await response.json();
 

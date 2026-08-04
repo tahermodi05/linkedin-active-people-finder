@@ -129,8 +129,10 @@ Not allowed
 Allowed
 
 - Input validation
-- In-memory scan state
 - HTTP routing
+- Controllers that remain thin and delegate to services
+- Services that own search and dashboard workflow logic
+- In-memory scan-session state through the Scan Store API
 - Health reporting
 - JSON response formatting
 
@@ -139,4 +141,5 @@ Not allowed
 - Chrome extension APIs
 - LinkedIn DOM parsing
 - UI orchestration
+- Business logic in controllers
 

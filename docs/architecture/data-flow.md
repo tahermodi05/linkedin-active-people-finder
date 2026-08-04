@@ -23,7 +23,16 @@
 8. `content.js` emits `ACTIVITY_PAGE_READY`.
 9. The worker sends `EXTRACT_ACTIVITY_INTELLIGENCE`.
 10. `content.js` builds activity intelligence and emits `ACTIVITY_INTELLIGENCE_EXTRACTED`.
-11. The worker sends completion data to `POST /api/search/complete`.
+11. The worker sends completion data to `POST /api/search/complete`, which updates the active scan session in the backend store.
+
+## Backend Scan Session Flow
+
+1. The extension sends profiles to `POST /api/search`.
+2. The backend creates a scan session with a backend-generated `scanId` and initial metadata.
+3. The session starts with `status: "running"`, `startedAt`, `completedAt: null`, `totalProfiles`, and `verifiedProfiles: 0`.
+4. Verification progress updates the active profile and advances the session.
+5. When the last profile is processed, the session is marked `completed` and `completedAt` is set.
+6. Dashboard endpoints read the same session objects through the Scan Store API.
 
 ## Activity Flow
 

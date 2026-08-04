@@ -130,18 +130,18 @@ What must never be placed here:
 
 ## `apps/backend`
 
-Purpose: HTTP API for scan results, verification progress, and health checks.
+Purpose: HTTP API for scan results, verification progress, dashboard reads, and health checks.
 
 What belongs here:
 
 - Express server bootstrap
-- Routes
-- Controllers
-- Services
+- Search routes and dashboard routes
+- Thin controllers
+- Search and dashboard services
 - Validation schemas
 - Error handling
 - Utilities
-- In-memory store
+- In-memory scan store and scan-session state
 
 What must never be placed here:
 

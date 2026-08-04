@@ -1,5 +1,6 @@
 import {
   completeCurrentVerification,
+  getCurrentScanId,
   getNextProfileForVerification,
 } from "../services/backendApi.js";
 import { MESSAGE_TYPES } from "../shared/messageTypes.js";
@@ -12,7 +13,7 @@ export async function startVerificationWorker() {
 }
 
 async function requestNextProfile() {
-  return getNextProfileForVerification();
+  return getNextProfileForVerification(getCurrentScanId());
 }
 
 async function openVerificationTab(profile) {

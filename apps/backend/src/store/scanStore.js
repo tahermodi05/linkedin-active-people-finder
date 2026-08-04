@@ -25,7 +25,21 @@ export function getLatestScan() {
   return latestScan;
 }
 
-export function getNextPendingProfile() {
+export function getNextPendingProfile(scanId) {
+  if (scanId) {
+    const session = scanSessions.get(scanId);
+
+    if (!session) {
+      return null;
+    }
+
+    if (session.pendingProfileIndex >= session.profiles.length) {
+      return null;
+    }
+
+    return session.profiles[session.pendingProfileIndex];
+  }
+
   if (pendingProfileIndex >= latestScan.length) {
     return null;
   }
@@ -41,6 +55,38 @@ export function getScanSession(scanId) {
   }
 
   return session.profiles;
+}
+
+export function getAllScanSessions() {
+  return Array.from(scanSessions.values());
+}
+
+export function getDashboardSummary() {
+  const sessions = Array.from(scanSessions.values());
+
+  return sessions.reduce(
+    (summary, session) => {
+      summary.totalScans += 1;
+
+      if (session.status === "completed") {
+        summary.completedScans += 1;
+      } else {
+        summary.runningScans += 1;
+      }
+
+      summary.totalProfiles += session.totalProfiles || 0;
+      summary.verifiedProfiles += session.verifiedProfiles || 0;
+
+      return summary;
+    },
+    {
+      totalScans: 0,
+      runningScans: 0,
+      completedScans: 0,
+      totalProfiles: 0,
+      verifiedProfiles: 0,
+    }
+  );
 }
 
 export function updateCurrentProfileVerification({

@@ -8,6 +8,7 @@ import { errorHandler } from "./middleware/errorHandler.js";
 
 import healthRouter from "./routes/health.js";
 import searchRouter from "./routes/searchRoutes.js";
+import dashboardRouter from "./routes/dashboardRoutes.js";
 
 const app = express();
 const PORT = config.port;
@@ -32,6 +33,7 @@ app.get("/", (req, res) => {
 
 app.use("/health", healthRouter);
 app.use("/api/search", searchRouter);
+app.use("/api/dashboard", dashboardRouter);
 
 // Error handler MUST be last
 app.use(errorHandler);
