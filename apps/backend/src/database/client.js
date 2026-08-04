@@ -1,6 +1,8 @@
-const { Pool } = require("pg");
-const databaseConfig = require("./config");
+import pg from "pg";
+import databaseConfig from "./config.js";
+
+const { Pool } = pg;
 
 const pool = new Pool(databaseConfig);
 
-module.exports = pool;
+export default pool;

@@ -6,4 +6,4 @@ const databaseConfig = {
   password: process.env.DB_PASSWORD || "",
 };
 
-module.exports = databaseConfig;
+export default databaseConfig;
