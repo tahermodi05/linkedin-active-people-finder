@@ -64,10 +64,31 @@ async function openVerificationTab(profile) {
     throw new Error("Profile URL is missing.");
   }
 
-  return chrome.tabs.create({
+  // If we already have a cached verification tab, try to reuse it by updating its URL.
+  if (verificationTabId != null) {
+    try {
+      const updatedTab = await chrome.tabs.update(verificationTabId, {
+        url: profile.profileUrl,
+        active: false,
+      });
+
+      // Update succeeded — keep cached id and return the tab.
+      verificationTabId = updatedTab.id;
+      return updatedTab;
+    } catch (err) {
+      // The tab might have been closed or update failed; clear cache and create a new one below.
+      verificationTabId = null;
+    }
+  }
+
+  // Create a new tab and cache its id for reuse.
+  const tab = await chrome.tabs.create({
     url: profile.profileUrl,
     active: false,
   });
+
+  verificationTabId = tab.id;
+  return tab;
 }
 
 function buildRecentActivityUrl(profileUrl) {
