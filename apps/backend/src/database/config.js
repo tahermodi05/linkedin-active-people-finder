@@ -6,6 +6,7 @@ function readEnv(name) {
 
 function getDatabaseConfig() {
   const isProduction = process.env.NODE_ENV === "production";
+
   const host = readEnv("DB_HOST") || (isProduction ? "" : "localhost");
   const port = Number(readEnv("DB_PORT") || (isProduction ? "" : "5432"));
   const database = readEnv("DB_NAME") || (isProduction ? "" : "veriq");
@@ -22,7 +23,9 @@ function getDatabaseConfig() {
 
     if (missing.length > 0) {
       const missingNames = missing.map(([name]) => name).join(", ");
-      throw new Error(`Missing required production database environment variables: ${missingNames}`);
+      throw new Error(
+        `Missing required production database environment variables: ${missingNames}`
+      );
     }
   }
 
@@ -32,6 +35,11 @@ function getDatabaseConfig() {
     database,
     user,
     password,
+    ssl: isProduction
+      ? {
+          rejectUnauthorized: false,
+        }
+      : false,
   };
 }
 
