@@ -465,13 +465,13 @@ class PostgresScanRepository {
       await client.query(
         `
           UPDATE scan_sessions
-          SET verified_profiles = $2,
+          SET verified_profiles = $2::int,
               status = CASE
-                WHEN $2 >= $3 THEN 'completed'
+                WHEN $2::int >= $3::int THEN 'completed'
                 ELSE status
               END,
               completed_at = CASE
-                WHEN $2 >= $3 THEN $4
+                WHEN $2::int >= $3::int THEN $4::timestamp
                 ELSE completed_at
               END
           WHERE scan_id = $1
