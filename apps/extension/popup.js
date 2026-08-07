@@ -4,8 +4,14 @@ const viewResultsButton = document.getElementById("viewResultsButton");
 const captureActivityButton = document.getElementById("captureActivityButton");
 const snapshotOutput = document.getElementById("snapshotOutput");
 
+const BACKEND_BASE_URL = (
+  (typeof globalThis !== "undefined" && globalThis.__VERIQ_BACKEND_URL__)
+    ? String(globalThis.__VERIQ_BACKEND_URL__)
+    : "http://localhost:3000"
+).replace(/\/$/, "");
+
 async function fetchScanResults() {
-  const response = await fetch("http://localhost:3000/api/search/results");
+  const response = await fetch(`${BACKEND_BASE_URL}/api/search/results`);
   const result = await response.json();
 
   if (!response.ok) {

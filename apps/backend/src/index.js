@@ -9,8 +9,6 @@ import { errorHandler } from "./middleware/errorHandler.js";
 import healthRouter from "./routes/health.js";
 import searchRouter from "./routes/searchRoutes.js";
 import dashboardRouter from "./routes/dashboardRoutes.js";
-import { checkDatabaseConnection } from "./database/healthCheck.js";
-import { closeDatabaseConnection } from "./database/client.js";
 
 const app = express();
 const PORT = config.port;
@@ -37,6 +35,7 @@ async function validateStartupConfiguration() {
   }
 
   try {
+    const { checkDatabaseConnection } = await import("./database/healthCheck.js");
     await checkDatabaseConnection();
   } catch (error) {
     throw new Error(`PostgreSQL startup validation failed: ${error.message}`);
@@ -102,7 +101,10 @@ async function startServer() {
       });
 
       if (!server.listening) {
-        await closeDatabaseConnection();
+        if (config.persistence === "postgres") {
+          const { closeDatabaseConnection } = await import("./database/client.js");
+          await closeDatabaseConnection();
+        }
         process.exit(0);
         return;
       }
@@ -112,12 +114,18 @@ async function startServer() {
           logFailure("server_shutdown_error", {
             message: error.message,
           });
-          await closeDatabaseConnection();
+          if (config.persistence === "postgres") {
+            const { closeDatabaseConnection } = await import("./database/client.js");
+            await closeDatabaseConnection();
+          }
           process.exit(1);
           return;
         }
 
-        await closeDatabaseConnection();
+        if (config.persistence === "postgres") {
+          const { closeDatabaseConnection } = await import("./database/client.js");
+          await closeDatabaseConnection();
+        }
         process.exit(0);
       });
     };

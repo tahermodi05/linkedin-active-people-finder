@@ -1,5 +1,4 @@
 import config from "../config/index.js";
-import { getDatabaseHealthStatus } from "../database/healthCheck.js";
 
 export function getHealthStatus() {
   const uptime = process.uptime();
@@ -29,6 +28,7 @@ export async function getReadinessStatus() {
   const checks = {};
 
   if (config.persistence === "postgres") {
+    const { getDatabaseHealthStatus } = await import("../database/healthCheck.js");
     checks.postgres = await getDatabaseHealthStatus();
   }
 

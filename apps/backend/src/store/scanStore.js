@@ -4,7 +4,7 @@ let latestScan = [];
 let pendingProfileIndex = 0;
 
 export function createScanSession(scanId, profiles) {
-  scanSessions.set(scanId, {
+  const session = {
     scanId,
     status: "running",
     startedAt: new Date().toISOString(),
@@ -13,7 +13,16 @@ export function createScanSession(scanId, profiles) {
     verifiedProfiles: 0,
     profiles: [...profiles],
     pendingProfileIndex: 0,
-  });
+  };
+
+  scanSessions.set(scanId, session);
+
+  // Return a minimal session summary compatible with the service layer expectations
+  return {
+    scanId: session.scanId,
+    totalProfiles: session.totalProfiles,
+    profiles: session.profiles,
+  };
 }
 
 export function setLatestScan(profiles) {
