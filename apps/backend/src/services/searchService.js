@@ -83,6 +83,7 @@ export async function completeCurrentVerification(data) {
     activityIntelligence: data.activityIntelligence,
     verificationConfidence: data.verificationConfidence,
     verifiedAt: new Date().toISOString(),
+    timings: data.timings,
   });
 
   if (!updatedProfile) {
@@ -95,9 +96,22 @@ export async function completeCurrentVerification(data) {
   await markCurrentProfileProcessed(data.scanId);
   const session = await getScanSession(data.scanId);
 
+  const profileWithTimings = data.timings
+    ? { ...updatedProfile, timings: data.timings }
+    : updatedProfile;
+
+  if (data.timings) {
+    console.log(JSON.stringify({
+      event: "profile_processing_timing",
+      scanId: data.scanId,
+      profileUrl: data.profileUrl || null,
+      timings: data.timings,
+    }));
+  }
+
   return {
     success: true,
-    profile: updatedProfile,
+    profile: profileWithTimings,
     session,
   };
 }

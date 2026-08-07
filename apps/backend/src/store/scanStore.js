@@ -105,6 +105,7 @@ export function updateCurrentProfileVerification({
   activityIntelligence,
   verificationConfidence,
   verifiedAt,
+  timings,
 }) {
   if (scanId) {
     const session = scanSessions.get(scanId);
@@ -124,6 +125,7 @@ export function updateCurrentProfileVerification({
       activityIntelligence,
       verificationConfidence,
       verifiedAt,
+      timings,
     };
 
     return session.profiles[session.pendingProfileIndex];
@@ -140,6 +142,7 @@ export function updateCurrentProfileVerification({
     activityIntelligence,
     verificationConfidence,
     verifiedAt,
+    timings,
   };
 
   return latestScan[pendingProfileIndex];

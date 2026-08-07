@@ -242,6 +242,15 @@ export async function startVerificationLifecycle() {
       break;
     }
 
+    const profileStartTime = Date.now();
+    const profileTiming = {
+      profileExtractionMs: 0,
+      verificationMs: 0,
+      activityExtractionMs: 0,
+      databaseSaveMs: 0,
+      totalMs: 0,
+    };
+
     const tabId = await navigateVerificationTab(profile.profileUrl);
 
     console.log("Using verification tab", tabId, profile.profileUrl);
@@ -254,7 +263,9 @@ export async function startVerificationLifecycle() {
       profile.profileUrl,
       "Waiting for PROFILE_PAGE_READY"
     );
+    const profileLoadStart = Date.now();
     await waitForProfileReady(tabId);
+    profileTiming.profileExtractionMs += Date.now() - profileLoadStart;
     console.log(
       "[Verification]",
       tabId,
@@ -275,6 +286,7 @@ export async function startVerificationLifecycle() {
       profile.profileUrl,
       "Calling requestProfileVerification()"
     );
+    const verificationExtractionStart = Date.now();
     await requestProfileVerification(tabId, profile.profileUrl);
     console.log(
       "[Verification]",
@@ -292,6 +304,8 @@ export async function startVerificationLifecycle() {
       "Waiting for PROFILE_VERIFIED"
     );
     const verificationResult = await verificationPromise;
+    profileTiming.verificationMs = Date.now() - verificationExtractionStart;
+    profileTiming.profileExtractionMs += profileTiming.verificationMs;
     const verifiedProfileWithConfidence = {
       ...verificationResult,
       verificationConfidence: calculateVerificationConfidence(verificationResult),
@@ -306,6 +320,7 @@ export async function startVerificationLifecycle() {
     console.log("Verification completed", verifiedProfileWithConfidence);
 
     const activityUrl = buildRecentActivityUrl(profile.profileUrl);
+    const activityExtractionStart = Date.now();
 
     const activityReadyPromise = waitForActivityPageReady(tabId);
 
@@ -366,6 +381,7 @@ export async function startVerificationLifecycle() {
       "Waiting for ACTIVITY_INTELLIGENCE_EXTRACTED"
     );
     currentActivityIntelligence = await activityIntelligencePromise;
+    profileTiming.activityExtractionMs = Date.now() - activityExtractionStart;
     console.log(
       "[Verification]",
       tabId,
@@ -381,11 +397,30 @@ export async function startVerificationLifecycle() {
       profile.profileUrl,
       "Calling completeCurrentVerification()"
     );
+    const databaseSaveStart = Date.now();
     await completeCurrentVerification({
+      profileUrl: profile.profileUrl,
       verificationStatus: "completed",
       currentlyWorksHere: determineCurrentlyWorksHere(verifiedProfileWithConfidence),
       activityIntelligence: currentActivityIntelligence,
+      verificationConfidence: verifiedProfileWithConfidence.verificationConfidence,
+      timings: {
+        profileExtractionMs: profileTiming.profileExtractionMs,
+        verificationMs: profileTiming.verificationMs,
+        activityExtractionMs: profileTiming.activityExtractionMs,
+      },
     });
+    profileTiming.databaseSaveMs = Date.now() - databaseSaveStart;
+    profileTiming.totalMs = Date.now() - profileStartTime;
+    console.log(
+      JSON.stringify({
+        event: "profile_processing_timing",
+        profileUrl: profile.profileUrl,
+        scanId: getCurrentScanId(),
+        timings: profileTiming,
+      })
+    );
+
     console.log(
       "[Verification]",
       tabId,
