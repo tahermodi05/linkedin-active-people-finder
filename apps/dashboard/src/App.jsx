@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const backendUrl = "https://veriqbackend-xqxqkglu.b4.run";
+const backendUrl = "https://veriqbackend-xqxqkglu.b4a.run";
 
 function App() {
   const [scans, setScans] = useState([]);

@@ -1,7 +1,7 @@
 const API_BASE_URL = (
-  (typeof globalThis !== "undefined" && globalThis.__VERIQ_BACKEND_URL__)
-    ? String(globalThis.__VERIQ_BACKEND_URL__)
-    : "http://localhost:3000"
+  (typeof globalThis !== "undefined" && globalThis.VERIQ_BACKEND_URL)
+    ? String(globalThis.VERIQ_BACKEND_URL)
+    : "https://veriqbackend-xqxqkglu.b4a.run"
 ).replace(/\/$/, "");
 
 let currentScanId = null;
@@ -16,14 +16,13 @@ export function getCurrentScanId() {
 
 export async function apiRequest(path, options = {}) {
   const response = await fetch(`${API_BASE_URL}${path}`, options);
-
   return response;
 }
 
 export async function getNextProfileForVerification(scanId = currentScanId) {
   const query = scanId ? `?scanId=${encodeURIComponent(scanId)}` : "";
-  const response = await apiRequest(`/api/search/next${query}`);
 
+  const response = await apiRequest(`/api/search/next${query}`);
   const result = await response.json();
 
   if (!response.ok) {

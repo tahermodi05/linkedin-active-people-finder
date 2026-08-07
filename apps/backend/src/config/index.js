@@ -34,10 +34,13 @@ function parseList(value, fallback) {
 const config = {
   port: getPort(),
   persistence: process.env.PERSISTENCE?.trim() || "postgres",
+
   corsOrigin: parseList(process.env.CORS_ORIGIN, [
     "http://localhost:4173",
     "http://127.0.0.1:4173",
+    "chrome-extension://cdkdfgododiblbpncmlajfkiofehlpln",
   ]),
+
   corsMethods: parseList(process.env.CORS_METHODS, ["GET", "POST", "OPTIONS"]),
   corsAllowedHeaders: parseList(process.env.CORS_ALLOWED_HEADERS, [
     "Content-Type",
