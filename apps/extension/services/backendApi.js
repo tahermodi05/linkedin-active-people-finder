@@ -1,7 +1,7 @@
 const API_BASE_URL = (
   (typeof globalThis !== "undefined" && globalThis.VERIQ_BACKEND_URL)
     ? String(globalThis.VERIQ_BACKEND_URL)
-    : "https://veriqbackend-xqxqkglu.b4a.run"
+    : "https://veriqbackend-9mx4k30f.b4a.run"
 ).replace(/\/$/, "");
 
 let currentScanId = null;
