@@ -45,7 +45,12 @@ const config = {
     "http://192.168.1.2:5173",
   ]),
 
-  corsMethods: parseList(process.env.CORS_METHODS, ["GET", "POST", "OPTIONS"]),
+corsMethods: parseList(process.env.CORS_METHODS, [
+  "GET",
+  "POST",
+  "DELETE",
+  "OPTIONS",
+]),
   corsAllowedHeaders: parseList(process.env.CORS_ALLOWED_HEADERS, [
     "Content-Type",
     "Authorization",
