@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+const backendUrl = "https://veriqbackend-xqxqkglu.b4.run";
+
 function App() {
   const [scans, setScans] = useState([]);
   const [selectedScan, setSelectedScan] = useState(null);
@@ -11,7 +13,6 @@ function App() {
   useEffect(() => {
     async function loadScans() {
       try {
-        const backendUrl = (import.meta.env.VITE_BACKEND_URL || "http://localhost:3000").replace(/\/$/, "");
         const response = await fetch(`${backendUrl}/api/dashboard/scans`);
 
         if (!response.ok) {
@@ -32,8 +33,10 @@ function App() {
     try {
       setLoading(true);
       setError("");
-      const backendUrl = (import.meta.env.VITE_BACKEND_URL || "http://localhost:3000").replace(/\/$/, "");
-      const response = await fetch(`${backendUrl}/api/dashboard/scans/${scanId}`);
+
+      const response = await fetch(
+        `${backendUrl}/api/dashboard/scans/${scanId}`
+      );
 
       if (!response.ok) {
         throw new Error("Failed to load scan details");
@@ -66,22 +69,48 @@ function App() {
             Back to scans
           </button>
 
-          <section style={{ border: "1px solid #ddd", padding: "1rem", borderRadius: "8px", marginBottom: "1rem" }}>
+          <section
+            style={{
+              border: "1px solid #ddd",
+              padding: "1rem",
+              borderRadius: "8px",
+              marginBottom: "1rem",
+            }}
+          >
             <h2>Scan</h2>
             <div>Scan ID: {selectedScan.scanId}</div>
             <div>Status: {selectedScan.status}</div>
             <div>Total profiles: {selectedScan.totalProfiles}</div>
             <div>Verified profiles: {selectedScan.verifiedProfiles}</div>
-            <div>Verification rate: {selectedScan.verificationRate ?? 0}%</div>
+            <div>
+              Verification rate: {selectedScan.verificationRate ?? 0}%
+            </div>
           </section>
 
-          <section style={{ border: "1px solid #ddd", padding: "1rem", borderRadius: "8px" }}>
+          <section
+            style={{
+              border: "1px solid #ddd",
+              padding: "1rem",
+              borderRadius: "8px",
+            }}
+          >
             <h2>Profiles</h2>
 
-            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginBottom: "1rem" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: "1rem",
+                flexWrap: "wrap",
+                marginBottom: "1rem",
+              }}
+            >
               <label>
                 Filter:
-                <select value={profileFilter} onChange={(event) => setProfileFilter(event.target.value)} style={{ marginLeft: "0.5rem" }}>
+                <select
+                  value={profileFilter}
+                  onChange={(event) => setProfileFilter(event.target.value)}
+                  style={{ marginLeft: "0.5rem" }}
+                >
                   <option value="all">All profiles</option>
                   <option value="verified">Verified profiles</option>
                   <option value="pending">Pending profiles</option>
@@ -91,29 +120,55 @@ function App() {
 
               <label>
                 Sort:
-                <select value={profileSort} onChange={(event) => setProfileSort(event.target.value)} style={{ marginLeft: "0.5rem" }}>
-                  <option value="confidence">Highest confidence first</option>
+                <select
+                  value={profileSort}
+                  onChange={(event) => setProfileSort(event.target.value)}
+                  style={{ marginLeft: "0.5rem" }}
+                >
+                  <option value="confidence">
+                    Highest confidence first
+                  </option>
                   <option value="name">Name alphabetically</option>
                 </select>
               </label>
             </div>
 
             {selectedScan.profiles && selectedScan.profiles.length > 0 ? (
-              <ul style={{ listStyle: "none", padding: 0, display: "grid", gap: "0.75rem" }}>
+              <ul
+                style={{
+                  listStyle: "none",
+                  padding: 0,
+                  display: "grid",
+                  gap: "0.75rem",
+                }}
+              >
                 {selectedScan.profiles
                   .filter((profile) => {
-                    const status = String(profile.verificationStatus || "pending").toLowerCase();
+                    const status = String(
+                      profile.verificationStatus || "pending"
+                    ).toLowerCase();
 
                     if (profileFilter === "verified") {
-                      return status === "verified" || Boolean(profile.verifiedAt);
+                      return (
+                        status === "verified" || Boolean(profile.verifiedAt)
+                      );
                     }
 
                     if (profileFilter === "pending") {
-                      return status === "pending" || status === "" || !profile.verifiedAt;
+                      return (
+                        status === "pending" ||
+                        status === "" ||
+                        !profile.verifiedAt
+                      );
                     }
 
                     if (profileFilter === "failed") {
-                      return status === "failed" || status === "rejected" || status === "error" || profile.currentlyWorksHere === false;
+                      return (
+                        status === "failed" ||
+                        status === "rejected" ||
+                        status === "error" ||
+                        profile.currentlyWorksHere === false
+                      );
                     }
 
                     return true;
@@ -123,12 +178,16 @@ function App() {
                       return (a.name || "").localeCompare(b.name || "");
                     }
 
-                    const confidenceA = a.verificationConfidence?.score ?? 0;
-                    const confidenceB = b.verificationConfidence?.score ?? 0;
+                    const confidenceA =
+                      a.verificationConfidence?.score ?? 0;
+                    const confidenceB =
+                      b.verificationConfidence?.score ?? 0;
+
                     return confidenceB - confidenceA;
                   })
                   .map((profile, index) => {
                     const intelligence = profile.activityIntelligence;
+
                     const intelligenceText = intelligence
                       ? typeof intelligence === "string"
                         ? intelligence
@@ -136,28 +195,65 @@ function App() {
                       : "No activity intelligence available.";
 
                     return (
-                      <li key={`${profile.profileUrl || profile.name || index}`} style={{ border: "1px solid #eee", padding: "0.75rem", borderRadius: "6px" }}>
+                      <li
+                        key={`${profile.profileUrl || profile.name || index}`}
+                        style={{
+                          border: "1px solid #eee",
+                          padding: "0.75rem",
+                          borderRadius: "6px",
+                        }}
+                      >
                         <div style={{ marginBottom: "0.5rem" }}>
-                          <strong>{profile.name || "Unnamed profile"}</strong>
+                          <strong>
+                            {profile.name || "Unnamed profile"}
+                          </strong>
                         </div>
 
                         <div style={{ marginBottom: "0.5rem" }}>
-                          <div><strong>Identity</strong></div>
+                          <div>
+                            <strong>Identity</strong>
+                          </div>
                           <div>Headline: {profile.headline || "—"}</div>
                           <div>Profile URL: {profile.profileUrl || "—"}</div>
                         </div>
 
                         <div style={{ marginBottom: "0.5rem" }}>
-                          <div><strong>Verification</strong></div>
-                          <div>Verification status: {profile.verificationStatus || "pending"}</div>
-                          <div>Verification confidence: {profile.verificationConfidence ? JSON.stringify(profile.verificationConfidence) : "—"}</div>
-                          <div>Currently works here: {profile.currentlyWorksHere === null ? "—" : String(profile.currentlyWorksHere)}</div>
-                          <div>Verified at: {profile.verifiedAt || "—"}</div>
+                          <div>
+                            <strong>Verification</strong>
+                          </div>
+                          <div>
+                            Verification status:{" "}
+                            {profile.verificationStatus || "pending"}
+                          </div>
+                          <div>
+                            Verification confidence:{" "}
+                            {profile.verificationConfidence
+                              ? JSON.stringify(profile.verificationConfidence)
+                              : "—"}
+                          </div>
+                          <div>
+                            Currently works here:{" "}
+                            {profile.currentlyWorksHere === null
+                              ? "—"
+                              : String(profile.currentlyWorksHere)}
+                          </div>
+                          <div>
+                            Verified at: {profile.verifiedAt || "—"}
+                          </div>
                         </div>
 
                         <div>
-                          <div><strong>Activity</strong></div>
-                          <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word", margin: "0.25rem 0 0", fontSize: "0.9rem" }}>
+                          <div>
+                            <strong>Activity</strong>
+                          </div>
+                          <pre
+                            style={{
+                              whiteSpace: "pre-wrap",
+                              wordBreak: "break-word",
+                              margin: "0.25rem 0 0",
+                              fontSize: "0.9rem",
+                            }}
+                          >
                             {intelligenceText}
                           </pre>
                         </div>
@@ -172,21 +268,39 @@ function App() {
         </>
       ) : (
         <>
-          {!error && scans.length === 0 ? <p>No scans available yet.</p> : null}
+          {!error && scans.length === 0 ? (
+            <p>No scans available yet.</p>
+          ) : null}
 
           {scans.length > 0 ? (
-            <ul style={{ listStyle: "none", padding: 0, display: "grid", gap: "1rem" }}>
+            <ul
+              style={{
+                listStyle: "none",
+                padding: 0,
+                display: "grid",
+                gap: "1rem",
+              }}
+            >
               {scans.map((scan) => (
                 <li
                   key={scan.scanId}
                   onClick={() => handleSelectScan(scan.scanId)}
-                  style={{ border: "1px solid #ddd", padding: "1rem", borderRadius: "8px", cursor: "pointer" }}
+                  style={{
+                    border: "1px solid #ddd",
+                    padding: "1rem",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                  }}
                 >
                   <strong>{scan.scanId}</strong>
                   <div>Status: {scan.status}</div>
                   <div>Total profiles: {scan.totalProfiles}</div>
-                  <div>Verified profiles: {scan.verifiedProfiles}</div>
-                  <div>Verification rate: {scan.verificationRate ?? 0}%</div>
+                  <div>
+                    Verified profiles: {scan.verifiedProfiles}
+                  </div>
+                  <div>
+                    Verification rate: {scan.verificationRate ?? 0}%
+                  </div>
                 </li>
               ))}
             </ul>
