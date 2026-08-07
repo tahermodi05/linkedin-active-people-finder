@@ -479,6 +479,40 @@ class PostgresScanRepository {
         [targetScanId, nextVerifiedProfiles, session.total_profiles || 0, completedAt]
       );
     });
+  }  async deleteScanSession(scanId) {
+    return withTransaction(async (client) => {
+      // delete profiles first
+      const delProfiles = await client.query(
+        `DELETE FROM scan_profiles WHERE scan_id = $1 RETURNING id`,
+        [scanId]
+      );
+
+      const delSessions = await client.query(
+        `DELETE FROM scan_sessions WHERE scan_id = $1 RETURNING scan_id`,
+        [scanId]
+      );
+
+      if (!delSessions.rows || delSessions.rows.length === 0) {
+        return null;
+      }
+
+      return {
+        deletedProfiles: delProfiles.rowCount || 0,
+        deletedScans: delSessions.rowCount || 0,
+      };
+    });
+  }
+
+  async deleteAllScanSessions() {
+    return withTransaction(async (client) => {
+      const delProfiles = await client.query(`DELETE FROM scan_profiles RETURNING id`);
+      const delSessions = await client.query(`DELETE FROM scan_sessions RETURNING scan_id`);
+
+      return {
+        deletedProfiles: delProfiles.rowCount || 0,
+        deletedScans: delSessions.rowCount || 0,
+      };
+    });
   }
 }
 

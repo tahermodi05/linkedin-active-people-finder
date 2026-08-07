@@ -39,6 +39,10 @@ const config = {
     "http://localhost:4173",
     "http://127.0.0.1:4173",
     "chrome-extension://cdkdfgododiblbpncmlajfkiofehlpln",
+    // Local dashboard development origins (port 5173)
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://192.168.1.2:5173",
   ]),
 
   corsMethods: parseList(process.env.CORS_METHODS, ["GET", "POST", "OPTIONS"]),

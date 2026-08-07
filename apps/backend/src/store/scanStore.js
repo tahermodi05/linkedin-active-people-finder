@@ -166,3 +166,21 @@ export function markCurrentProfileProcessed(scanId) {
     pendingProfileIndex++;
   }
 }
+
+export function deleteScanSession(scanId) {
+  const session = scanSessions.get(scanId);
+  if (!session) return null;
+  const deletedProfiles = Array.isArray(session.profiles) ? session.profiles.length : 0;
+  const deletedScans = scanSessions.delete(scanId) ? 1 : 0;
+  return { deletedProfiles, deletedScans };
+}
+
+export function deleteAllScanSessions() {
+  const deletedScans = scanSessions.size;
+  let deletedProfiles = 0;
+  for (const session of scanSessions.values()) {
+    deletedProfiles += Array.isArray(session.profiles) ? session.profiles.length : 0;
+  }
+  scanSessions.clear();
+  return { deletedProfiles, deletedScans };
+}

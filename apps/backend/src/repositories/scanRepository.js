@@ -25,6 +25,9 @@ const boundRepository = {
   getDashboardSummary: (...args) => repository.getDashboardSummary(...args),
   updateCurrentProfileVerification: (...args) => repository.updateCurrentProfileVerification(...args),
   markCurrentProfileProcessed: (...args) => repository.markCurrentProfileProcessed(...args),
+  // deletion APIs
+  deleteScanSession: (...args) => repository.deleteScanSession(...args),
+  deleteAllScanSessions: (...args) => repository.deleteAllScanSessions(...args),
 };
 
 export const {
@@ -37,4 +40,6 @@ export const {
   getDashboardSummary,
   updateCurrentProfileVerification,
   markCurrentProfileProcessed,
+  deleteScanSession,
+  deleteAllScanSessions,
 } = boundRepository;
