@@ -424,13 +424,13 @@ class PostgresScanRepository {
       }
 
       await client.query(
-        `
-          UPDATE scan_profiles
-          SET verified_at = COALESCE(verified_at, $2)
-          WHERE id = $1
-        `,
-        [pendingProfile.id, new Date().toISOString()]
-      );
+  `
+    UPDATE scan_profiles
+    SET verified_at = COALESCE(verified_at, $2::timestamp)
+    WHERE id = $1
+  `,
+  [pendingProfile.id, new Date().toISOString()]
+);
 
       const processedCountResult = await client.query(
         `
